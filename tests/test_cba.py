@@ -11,14 +11,12 @@ class TestCbaModel(unittest.TestCase):
 
         example_data_dir = join(dirname(__file__), "example_data")
 
-        input = Section.from_file(join(example_data_dir, "section_635950_304.json"))
-        expected_output = CbaResult.load_from_file(join(example_data_dir, "section_635950_304.output.json"))
+        ident = "615073_305"
+        input = Section.from_file(join(example_data_dir, f"section_{ident}.json"))
+        expected_output = CbaResult.load_from_file(join(example_data_dir, f"section_{ident}.output.json"))
 
         cba_model = cba.CostBenefitAnalysisModel()
         actual_output = cba_model.compute_cba_for_section(input)
-
-        print(actual_output)
-        print(expected_output)
 
         def comp(a, b):
             a = a.__dict__["_data"]
