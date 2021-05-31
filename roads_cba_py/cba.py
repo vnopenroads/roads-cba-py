@@ -463,7 +463,7 @@ class CostBenefitAnalysisModel:
             "vehicle_utilization": dUtilization,
             "esa_loading": dESATotal[1],
             "iri_projection": dCondIRI[iTheSelected].tolist(),
-            "iri_base": dCondIRI[0][0:10].tolist(),
+            "iri_base": dCondIRI[0].tolist(),
             "con_projection": dCondCON[iTheSelected].tolist(),
             "con_base": dCondCON[0].tolist(),
             "financial_recurrent_cost": dCostRecurrentFin[iTheSelected].tolist(),

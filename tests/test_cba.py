@@ -28,12 +28,29 @@ class TestCbaModel(unittest.TestCase):
                 if isinstance(x, float):
                     return math.isclose(x, y)
                 if isinstance(x, list):
+                    if len(x) == 10 and len(y) == 20:
+                        y = y[0:10]
+                    if len(y) == 10 and len(x) == 20:
+                        x = x[0:10]
                     return all(math.isclose(xx, yy) for xx, yy in zip(x, y))
                 raise ValueError(type(x))
 
+            def print_diff(k, v1, v2):
+                if isinstance(v1, list):
+                    if len(v1) == 10 and len(v2) == 20:
+                        v2 = v2[0:10]
+                    if len(v2) == 10 and len(v1) == 20:
+                        v1 = v1[0:10]
+                    print(f"{k}:")
+                    return [
+                        print(f"    {x:>2.3f} {'==' if x == y else '!='} {y:>2.3f} ({x - y})") for x, y in zip(v1, v2)
+                    ]
+
+                return print(f"{k} => {v1} != {b[k]}")
+
             a = a.__dict__["_data"]
             b = b.__dict__["_data"]
-            diffs = [f"{k} => {v1} != {b[k]}" for k, v1 in a.items() if not check(v1, b[k])]
+            diffs = [print_diff(k, v1, b[k]) for k, v1 in a.items() if not check(v1, b[k])]
             [print(d) for d in diffs]
             return diffs
 
