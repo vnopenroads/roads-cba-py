@@ -60,7 +60,8 @@ class CostBenefitAnalysisModel:
         iRoadType = section.road_type
         iSurfaceType = section.surface_type
         iConditionClass = section.condition_class
-        dRoughness = section.roughness
+        dRoughness = self.get_initial_roughness(section)
+
         dStructuralNo = section.structural_no
         iPavementAge = section.pavement_age
         iDrainageClass = None
@@ -132,14 +133,6 @@ class CostBenefitAnalysisModel:
         dSolCost = np.zeros((13,), dtype=np.float64)  # As Double ' alternatives
         dSolCostkm = np.zeros((13,), dtype=np.float64)  # As Double ' alternatives
         iSolYear = np.zeros((13,), dtype=np.float64)  # As Double ' alternatives
-        dNPVMax = 0.0
-        dYearRoughness = 0.0
-        iYearAge = 0
-        dYearSNC = 0.0
-        iYearLanes = 0
-        dYearWidth = 0.0
-        dYearLength = 0.0
-        iYearSurface = 0
 
         ####################################################
         # Loop alternatives
@@ -327,113 +320,12 @@ class CostBenefitAnalysisModel:
 
                 # Rouhgness
                 if iy > 0:
-                    """
-                    Rougnesss progression function of surface type
-                    """
-                    if iCondSurface[ia, iy] == 1:
-                        dYearRoughness = dYearRoughness * (1 + self.dRoadDet[0, 1])
-                        if dYearRoughness > 16:
-                            dYearRoughness = 16
+                    dYearRoughness = self.calculate_next_year_roughness(
+                        dYearRoughness, iYearAge, ia, iy, iTemperature, iMoisture, dCondSNC, dESATotal, iCondSurface
+                    )
+                    dYearRoughness = min(16, dYearRoughness)
 
-                        iYearAge = iYearAge + 1
-
-                    elif iCondSurface[ia, iy] == 2:
-                        if self.dRoadDet[1, 0] == float(1):
-                            # Constant Factor Increase, dRoadDet[1, 1] is currently None
-                            dYearRoughness = dYearRoughness * (1 + self.dRoadDet[1, 1])
-                            iYearAge = iYearAge + 1
-                        elif self.dRoadDet[1, 0] == float(2):
-                            # HDM-4 Simplified Equation:
-                            # RIb = RIa + Kgp * (a0 * Exp (Kgm * m * AGE3) * [(1 + SNC * a1)]-5 * YE4
-                            # + a2 * AGE3) + (Kgm *m * RIa)
-                            dYearRoughness = dYearRoughness + (
-                                self.dRoadDet[1, 2]
-                                * (
-                                    self.dRoadDet[1, 4]
-                                    * np.exp(
-                                        self.dRoadDet[1, 3] * self.dm_coeff[iTemperature - 1, iMoisture - 1] * iYearAge
-                                    )
-                                    * np.power(1 + dCondSNC[ia, iy] * self.dRoadDet[1, 5], -5)
-                                    * dESATotal[iy]
-                                    + self.dRoadDet[1, 6] * iYearAge
-                                )
-                                + (
-                                    self.dRoadDet[1, 3]
-                                    * self.dm_coeff[iTemperature - 1, iMoisture - 1]
-                                    * dYearRoughness
-                                )
-                            )
-                            iYearAge = iYearAge + 1
-                        elif self.dRoadDet[1, 0] == float(3):
-                            # Climate Related
-                            dYearRoughness = dYearRoughness * (1 + self.dm_coeff[iTemperature - 1, iMoisture - 1])
-                            iYearAge = iYearAge + 1
-
-                        if dYearRoughness > 16:
-                            dYearRoughness = 16
-
-                    elif iCondSurface[ia, iy] == 3:
-                        if self.dRoadDet[2, 0] == float(1):
-                            # Constant Factor Increase
-                            dYearRoughness = dYearRoughness * (1 + self.dRoadDet[2, 1])
-                            iYearAge = iYearAge + 1
-                        elif self.dRoadDet[2, 0] == float(2):
-                            # HDM-4 Simplified Equation:
-                            # RIb = RIa + Kgp * (a0 * Exp (Kgm * m * AGE3) * [(1 + SNC * a1)]-5 * YE4
-                            # + a2 * AGE3) + (Kgm *m * RIa)
-                            dYearRoughness = dYearRoughness + (
-                                self.dRoadDet[2, 2]
-                                * (
-                                    self.dRoadDet[2, 4]
-                                    * np.exp(
-                                        self.dRoadDet[2, 3] * self.dm_coeff[iTemperature - 1, iMoisture - 1] * iYearAge
-                                    )
-                                    * np.power((1 + dCondSNC[ia, iy] * self.dRoadDet[2, 5]), -5)
-                                    * dESATotal[iy]
-                                    + self.dRoadDet[2, 6] * iYearAge
-                                )
-                                + (
-                                    self.dRoadDet[2, 3]
-                                    * self.dm_coeff[iTemperature - 1, iMoisture - 1]
-                                    * dYearRoughness
-                                )
-                            )
-                            iYearAge = iYearAge + 1
-                        elif self.dRoadDet[2, 0] == float(3):
-                            # Climate Related Only
-                            dYearRoughness = dYearRoughness * (1 + self.dm_coeff[iTemperature - 1, iMoisture - 1])
-                            iYearAge = iYearAge + 1
-
-                        if dYearRoughness > 16:
-                            dYearRoughness = 16
-
-                    elif iCondSurface[ia, iy] == 4:
-                        dYearRoughness = dYearRoughness * (1 + self.dRoadDet[3, 1])
-                        iYearAge = iYearAge + 1
-
-                        if dYearRoughness > 25:
-                            dYearRoughness = 25
-
-                    elif iCondSurface[ia, iy] == 5:
-                        dYearRoughness = dYearRoughness * (1 + self.dRoadDet[4, 1])
-                        iYearAge = iYearAge + 1
-
-                        if dYearRoughness > 25:
-                            dYearRoughness = 25
-
-                    elif iCondSurface[ia, iy] == 6:
-                        dYearRoughness = dYearRoughness * (1 + self.dRoadDet[5, 1])
-                        iYearAge = iYearAge + 1
-
-                        if dYearRoughness > 16:
-                            dYearRoughness = 16
-
-                    elif iCondSurface[ia, iy] == 7:
-                        dYearRoughness = dYearRoughness * (1 + self.dRoadDet[6, 1])
-                        iYearAge = iYearAge + 1
-
-                        if dYearRoughness > 16:
-                            dYearRoughness = 16
+                iYearAge = iYearAge + 1
 
                 if iy == iTheYear - 1:
                     """
@@ -544,6 +436,14 @@ class CostBenefitAnalysisModel:
                 iTheSelected = ia
                 dNPVMax = dSolNPV[ia]
 
+        # print out values by year
+        def pyear(desc, x):
+            print(f"======================\n{desc}\n======================")
+            for i in range(0, 20):
+                print(f"{i: >2}  {x[i]: 0.3}")
+
+        # pyear("iri_base", dCondIRI[0])
+
         ###########################################################
         # Get the output results
         ###########################################################
@@ -563,7 +463,7 @@ class CostBenefitAnalysisModel:
             "vehicle_utilization": dUtilization,
             "esa_loading": dESATotal[1],
             "iri_projection": dCondIRI[iTheSelected].tolist(),
-            "iri_base": dCondIRI[0].tolist(),
+            "iri_base": dCondIRI[0][0:10].tolist(),
             "con_projection": dCondCON[iTheSelected].tolist(),
             "con_base": dCondCON[0].tolist(),
             "financial_recurrent_cost": dCostRecurrentFin[iTheSelected].tolist(),
@@ -571,87 +471,74 @@ class CostBenefitAnalysisModel:
         }
         return CbaResult(results)
 
+    # JC: I'm not sure what this does, but it's used in a number of places to get the left index
+    #     into the dWorkEvaluated member variable
+    def get_left_index(self, iSurfaceType, iRoadClass, iConditionClass):
+        return (iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1
+
     def compute_alternatives(self, iSurfaceType, iRoadClass, iConditionClass):
         iNoAlernatives = 0
         dAlternatives = np.zeros((13, 2), dtype=np.float64)
 
         # Get initial road work for the 13 alternatives
-        dAlternatives[0, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 1]
-        )
-        dAlternatives[1, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 2]
-        )
-        dAlternatives[2, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 2]
-        )
-        dAlternatives[3, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 2]
-        )
-        dAlternatives[4, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 2]
-        )
-        dAlternatives[5, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 2]
-        )
-        dAlternatives[6, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 2]
-        )
-        dAlternatives[7, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 3]
-        )
-        dAlternatives[8, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 3]
-        )
-        dAlternatives[9, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 3]
-        )
-        dAlternatives[10, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 3]
-        )
-        dAlternatives[11, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 3]
-        )
-        dAlternatives[12, 0] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 3]
-        )
+        left_index = self.get_left_index(iSurfaceType, iRoadClass, iConditionClass)
+        dAlternatives[0, 0] = int(self.dWorkEvaluated[left_index, 1])
+        dAlternatives[1:7, 0] = int(self.dWorkEvaluated[left_index, 2])
+        dAlternatives[7:13, 0] = int(self.dWorkEvaluated[left_index, 3])
 
         # Define years of initial works for 13 alternatives
-        dAlternatives[0, 1] = int(
-            self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 0]
-        )
+        dAlternatives[0, 1] = int(self.dWorkEvaluated[left_index, 0])
 
         if dAlternatives[1, 0] > 0:  # first road work defined: evaluate at least 7 alternatives
-            dAlternatives[1, 1] = 1
-            dAlternatives[2, 1] = 2
-            dAlternatives[3, 1] = 3
-            dAlternatives[4, 1] = 4
-            dAlternatives[5, 1] = 5
-            dAlternatives[6, 1] = 6
+            dAlternatives[1:7, 1] = [1, 2, 3, 4, 5, 6]
             iNoAlernatives = 7
 
         if dAlternatives[7, 0] > 0:  # second road work defined: evaluate 13 alternatives
-            dAlternatives[7, 1] = 1
-            dAlternatives[8, 1] = 2
-            dAlternatives[9, 1] = 3
-            dAlternatives[10, 1] = 4
-            dAlternatives[11, 1] = 5
-            dAlternatives[12, 1] = 6
+            dAlternatives[7:13, 1] = [1, 2, 3, 4, 5, 6]
             iNoAlernatives = 13
 
         if dAlternatives[1, 0] == 0 and dAlternatives[7, 0] == 0:  # no road works defined: evaluate 2 base alternatives
-            dAlternatives[1, 0] = self.dWorkEvaluated[
-                (iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 1
-            ]
-            dAlternatives[1, 1] = self.dWorkEvaluated[
-                (iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 0
-            ]
+            dAlternatives[1, 0] = self.dWorkEvaluated[left_index, 1]
+            dAlternatives[1, 1] = self.dWorkEvaluated[left_index, 0]
             iNoAlernatives = 2
 
         return iNoAlernatives, dAlternatives
 
     def compute_cost_factor(self, iSurfaceType, iRoadClass, iConditionClass):
-        return self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1, 4]
+        baz = iConditionClass - 1
+        return self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + baz, 4]
+
+    def calculate_next_year_roughness(
+        self, dYearRoughness, iYearAge, ia, iy, iTemperature, iMoisture, dCondSNC, dESATotal, iCondSurface
+    ):
+        """
+        Rougnesss progression function of surface type
+        """
+
+        surface_condition = iCondSurface[ia, iy]
+        foo, const, Kgp, Kgm, a0, a1, a2 = self.dRoadDet[surface_condition - 1, 0:7]
+
+        # Surface condition classes 1,4,5,6,7 always use constant deterioration factors
+        # classes 2 & 3 use them when the FOO is 1
+        if surface_condition in (1, 4, 5, 6, 7) or foo == float(1):
+            return dYearRoughness * (1 + const)
+
+        # otherwise the surface_condition is either 2 or 3
+        moisture_coeff = self.dm_coeff[iTemperature - 1, iMoisture - 1]
+
+        if foo == float(3):  # Climate Related Only
+            return dYearRoughness * (1 + moisture_coeff)
+
+        if foo == float(2):
+            # HDM-4 Simplified Equation:
+            # RIb = RIa + Kgp * (a0 * Exp (Kgm * m * AGE3) * [(1 + SNC * a1)]-5 * YE4 + a2 * AGE3) + (Kgm *m * RIa)
+            snc = dCondSNC[ia, iy]
+            ye4 = dESATotal[iy]
+            return dYearRoughness + (
+                Kgp
+                * (a0 * np.exp(Kgm * moisture_coeff * iYearAge) * np.power((1 + snc * a1), -5) * ye4 + a2 * iYearAge)
+                + (Kgm * moisture_coeff * dYearRoughness)
+            )
 
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
         for iv in range(12):
@@ -686,3 +573,12 @@ class CostBenefitAnalysisModel:
         for iv in range(0, 12):
             dUtilization = dUtilization + dAADT[iv, 0] * dLength * 365 / 1000000
         return dUtilization
+
+    def get_initial_roughness(self, section):
+        if section.roughness == 0 and section.condition_class == 0:
+            raise ValueError("Must define either roughness or road condition class")
+        if section.roughness > 0:
+            return section.roughness
+        roughness, pavementAge = dConditionData[section.surface_type - 1, section.condition_class - 1]
+        print(roughness, pavementAge)
+        return roughness
