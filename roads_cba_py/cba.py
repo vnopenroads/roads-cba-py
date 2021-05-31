@@ -1,4 +1,7 @@
+import bisect
+
 import numpy as np
+import pandas as pd
 
 from .cba_result import CbaResult
 from .defaults import (
@@ -20,6 +23,9 @@ from .defaults import (
     dRoadDet,
     iri_cc_df,
     get_cc_from_iri,
+    default_lanes,
+    default_from_range_lookup,
+    get_cc_from_iri_,
 )
 from .section import Section
 
@@ -43,6 +49,7 @@ class CostBenefitAnalysisModel:
         self.dSPEED = dSPEED
         self.dRoadDet = dRoadDet
         self.iri_cc_df = iri_cc_df
+        self.default_lanes = default_lanes
 
     def compute_cba_for_section(self, section: Section) -> CbaResult:
         """
@@ -402,6 +409,10 @@ class CostBenefitAnalysisModel:
                         )
 
                 # Pavement Condition Class function of rougness
+                # print(
+                #     get_cc_from_iri(self.iri_cc_df, dCondIRI[ia, iy], iSurfaceType),
+                #     get_cc_from_iri_(self.iri_cc_df, dCondIRI[ia, iy], iSurfaceType),
+                # )
                 dCondCON[ia, iy] = get_cc_from_iri(self.iri_cc_df, dCondIRI[ia, iy], iSurfaceType)
                 dCostRecurrentFin[ia, iy] = dCostRecurrentFin[ia, iy] * dRecMult[dCondCON[ia, iy] - 1]
                 dCostRecurrentEco[ia, iy] = dCostRecurrentEco[ia, iy] * dRecMult[dCondCON[ia, iy] - 1]
@@ -574,11 +585,85 @@ class CostBenefitAnalysisModel:
             dUtilization = dUtilization + dAADT[iv, 0] * dLength * 365 / 1000000
         return dUtilization
 
-    def get_initial_roughness(self, section):
+    def get_initial_roughness(self, section: Section) -> Section:
         if section.roughness == 0 and section.condition_class == 0:
             raise ValueError("Must define either roughness or road condition class")
-        if section.roughness > 0:
-            return section.roughness
-        roughness, pavementAge = dConditionData[section.surface_type - 1, section.condition_class - 1]
-        print(roughness, pavementAge)
-        return roughness
+        if section.roughness == 0:
+            roughness, pavementAge = dConditionData[section.surface_type - 1, section.condition_class - 1]
+            section.roughness = roughness
+
+        if section.condition_class == 0:
+            section.condition_class = get_cc_from_iri(self.iri_cc_df, section.roughness, section.surface_type)
+
+        return section
+
+    def fill_default_road_type(self, section: Section) -> Section:
+        if section.road_type == 0 and section.surface_type == 0:
+            raise ValueError("Must define either road type or road surface type")
+        if section.surface_type == 0:
+            section.surface_type = iSurfaceDefaults[section.road_type]
+        if section.road_type == 0:
+            if section.surface_type in (4, 5):
+                section.road_type = 2
+            else:
+                section.road_type = 1
+
+        # Width and Number of Lanes Class
+        if section.width == 0 and section.lanes == 0:
+            raise ValueError("Must define either road width or number of lanes")
+
+        if section.width == 0:
+            section.width = dWidthDefaults(section.lanes, 1)
+        if section.lanes == 0:
+            section.lanes = self.get_default_lanes(section.width)
+
+    def get_default_lanes(self, width):
+        return default_from_range_lookup(self.default_lanes, width, "lower_width", "upper_width", "lanes")
+
+
+"""
+
+        ' Roughess and Road Condition Class
+        if dRoughness ==0 And iConditionClass ==0 :
+            MsgBox "Error: Both road condition class and roughness are empty on row " & iRow & ". Program will terminate. "
+            Exit Sub
+        End if
+        if dRoughness ==0 :
+            dRoughness = dConditionData(iSurfaceType, iConditionClass, 1)
+        End if
+
+        ' Pavement Age
+        if iPavementAge ==0 :
+            iPavementAge = dConditionData(iSurfaceType, iConditionClass, 2)
+        End if
+        ' Structural Number
+        if dStructuralNo ==0 :
+            if iSurfaceType < 4 :
+                dStructuralNo = dTrafficLevels(iTrafficLevel, 13 + iConditionClass)
+            End if
+        End if
+        ' Traffic Level and Traffic Data
+        if iTrafficLevel ==0 And dAADT(13, 1) ==0 :
+            MsgBox "Error: Both traffic level class and traffic data are empty on row " & iRow & ". Program will terminate. "
+            Exit Sub
+        End if
+        if dAADT(13, 1) ==0 :
+            dAADT(13, 1) = dTrafficLevels(iTrafficLevel, 1)
+            For iv = 1 To 12
+                dAADT(iv, 1) = dAADT(13, 1) * dTrafficLevels(iTrafficLevel, 1 + iv)
+            Next iv
+        Else
+            dTemp ==0
+            For iv = 1 To 12
+                dTemp = dTemp + dAADT(iv, 1)
+            Next iv
+            if dTemp <> dAADT(13, 1) :
+                MsgBox "Error: Traffic composition total is not the same as total traffic for row " & iRow & ". Program will terminate. "
+                Exit Sub
+            End if
+        
+        End if
+        if iTrafficLevel ==0 :
+            iTrafficLevel = Application.WorksheetFunction.VLookup(dAADT(13, 1), Range("TrafficRanges"), 3)
+        End if
+"""

@@ -67,8 +67,22 @@ dVehicleFleet = np.array(
 
 iSurfaceDefaults = np.array([3, 4], dtype=np.uint8)
 
-# 4. Default Width
+# 4. Default Width (width, XXXX)
+#                           1 lane    2 lane    3 lane    4 lane    5 lane     6 lane     7 lane
 dWidthDefaults = np.array([[3.5, 1], [5.0, 2], [7.0, 2], [9.0, 2], [14.0, 4], [21.0, 6], [28.0, 8]], dtype=np.float64)
+
+default_lanes = pd.DataFrame(
+    data=[
+        (0.00, 4.25, 1),
+        (4.25, 6.00, 2),
+        (6.00, 8.00, 3),
+        (8.00, 11.5, 4),
+        (11.5, 17.50, 5),
+        (17.5, 24.50, 6),
+        (24.5, 100.0, 7),
+    ],
+    columns=["lower_width", "upper_width", "lanes"],
+)
 
 # 5. Surface type, condition levels, variables [initialRoughness, pavementAge]
 dConditionData = np.array(
@@ -3200,3 +3214,22 @@ def get_cc_from_iri(iri_cc_df, iri, surface_type, default=3):
             cc = row.ConditionCategory
             break
     return int(cc)
+
+
+def get_cc_from_iri_(iri, surface_type):
+    return int(
+        default_from_range_lookup(
+            iri_cc_df.query("SurfaceType == @surface_type"),
+            iri,
+            lower_col="RoughnessFrom",
+            upper_col="RoughnessTo",
+            value_col="ConditionCategory",
+        )
+    )
+
+
+def default_from_range_lookup(df, v, lower_col="lower", upper_col="upper", value_col="value"):
+    rows = df.query(f"@v >= {lower_col} & @v < {upper_col}")
+    if len(rows) != 1:
+        raise ValueError(f"Can't find default value for {v} in ({lower_col},{upper_col})")
+    return rows.iloc[0][value_col]
