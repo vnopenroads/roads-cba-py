@@ -21,9 +21,9 @@
     266.54033283544874,
     280.933510808563
   ],
-  "truck_percent": null,
-  "vehicle_utilization": null,
-  "esa_loading": null,
+  "truck_percent": 0.18,
+  "vehicle_utilization": 0.6439066152365858,
+  "esa_loading": 0.00615755,
   "iri_projection": [
     12.0,
     12.3,

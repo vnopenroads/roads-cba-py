@@ -15,7 +15,7 @@
   "end_km": 0.0,
   "length": 3.4560962076957,
   "lanes": 1,
-  "width": 3.0,
+  "width": "3",
   "road_class": 6,
   "terrain": 3,
   "temperature": 1,

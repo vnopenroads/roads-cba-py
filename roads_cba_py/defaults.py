@@ -26,7 +26,9 @@ dGrowth = dGrowth / 100
 
 # 2. Traffic Levels
 dTrafficLevels = np.array(
-    [
+    #   <-------------- vehicle type ------------------------------->
+    #              s.car       delv       m.trk      a.trk m.bus  tot  <- condition class ->
+    [  # vol mbike      m.car       s.trk       l.trk   s.bus  l.bus  13   14   15   16   17
         [25, 0.75, 0.02, 0.05, 0.01, 0.01, 0.12, 0.03, 0, 0, 0, 0, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
         [75, 0.75, 0.02, 0.05, 0.01, 0.01, 0.12, 0.03, 0, 0, 0, 0, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
         [175, 0.65, 0.03, 0.07, 0.02, 0.02, 0.13, 0.04, 0.01, 0, 0.02, 0.01, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
@@ -44,6 +46,27 @@ dTrafficLevels = np.array(
         [500000, 0.25, 0.08, 0.12, 0.07, 0.07, 0.18, 0.08, 0.05, 0.01, 0.06, 0.02, 0.01, 8.0, 8.0, 8.0, 8.0, 8.0],
     ],
     dtype=np.float64,
+)
+
+traffic_ranges = pd.DataFrame(
+    columns=[["lower", "upper", "traffic_class"]],
+    data=[
+        [0, 50, 1],
+        [50, 100, 2],
+        [100, 250, 3],
+        [250, 500, 4],
+        [500, 1000, 5],
+        [1000, 3000, 6],
+        [3000, 5000, 7],
+        [5000, 7000, 8],
+        [7000, 9000, 9],
+        [9000, 12000, 10],
+        [12000, 15000, 11],
+        [15000, 20000, 12],
+        [20000, 30000, 13],
+        [30000, 40000, 14],
+        [40000, 100000, 15],
+    ],
 )
 
 # 3. Vehicle Fleet
@@ -3204,6 +3227,8 @@ iri_cc = np.array(
 iri_cc_df = pd.DataFrame(data=iri_cc, columns=["SurfaceType", "RoughnessFrom", "RoughnessTo", "ConditionCategory"])
 
 iri_cc_df[["SurfaceType", "ConditionCategory"]] = iri_cc_df[["SurfaceType", "ConditionCategory"]].astype(int)
+
+# TODO: Remove one of these implementations
 
 
 def get_cc_from_iri(iri_cc_df, iri, surface_type, default=3):

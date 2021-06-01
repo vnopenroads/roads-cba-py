@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from schematics.models import Model
 from schematics.types import IntType, StringType, FloatType
@@ -66,3 +67,35 @@ class Section(Model):
     def from_file(cls, filename):
         with open(filename) as f:
             return Section(json.load(f))
+
+    def set_aadts(self, aadts: List[float]):
+        (
+            self.aadt_motorcyle,
+            self.aadt_carsmall,
+            self.aadt_carmedium,
+            self.aadt_delivery,
+            self.aadt_4wheel,
+            self.aadt_smalltruck,
+            self.aadt_mediumtruck,
+            self.aadt_largetruck,
+            self.aadt_articulatedtruck,
+            self.aadt_smallbus,
+            self.aadt_mediumbus,
+            self.aadt_largebus,
+        ) = aadts
+
+    def get_aadts(self):
+        return (
+            self.aadt_motorcyle,
+            self.aadt_carsmall,
+            self.aadt_carmedium,
+            self.aadt_delivery,
+            self.aadt_4wheel,
+            self.aadt_smalltruck,
+            self.aadt_mediumtruck,
+            self.aadt_largetruck,
+            self.aadt_articulatedtruck,
+            self.aadt_smallbus,
+            self.aadt_mediumbus,
+            self.aadt_largebus,
+        )

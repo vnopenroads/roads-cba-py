@@ -26,6 +26,7 @@ from .defaults import (
     default_lanes,
     default_from_range_lookup,
     get_cc_from_iri_,
+    traffic_ranges,
 )
 from .section import Section
 
@@ -67,12 +68,11 @@ class CostBenefitAnalysisModel:
         iRoadType = section.road_type
         iSurfaceType = section.surface_type
         iConditionClass = section.condition_class
-        dRoughness = self.get_initial_roughness(section)
+        section = self.fill_defaults(section)
 
         dStructuralNo = section.structural_no
         iPavementAge = section.pavement_age
         iDrainageClass = None
-        iTrafficLevel = section.traffic_level
         iGrowthScenario = section.traffic_growth
 
         dAADT = np.zeros((13, 20), dtype=np.float64)
@@ -151,7 +151,7 @@ class CostBenefitAnalysisModel:
             """
             LOOP YEARS
             """
-            dYearRoughness = dRoughness
+            dYearRoughness = section.roughness
             dYearSNC = dStructuralNo
             iYearAge = iPavementAge
             iYearLanes = iLanes
@@ -413,7 +413,8 @@ class CostBenefitAnalysisModel:
                 #     get_cc_from_iri(self.iri_cc_df, dCondIRI[ia, iy], iSurfaceType),
                 #     get_cc_from_iri_(self.iri_cc_df, dCondIRI[ia, iy], iSurfaceType),
                 # )
-                dCondCON[ia, iy] = get_cc_from_iri(self.iri_cc_df, dCondIRI[ia, iy], iSurfaceType)
+                # dCondCON[ia, iy] = get_cc_from_iri(self.iri_cc_df, dCondIRI[ia, iy], iSurfaceType)
+                dCondCON[ia, iy] = get_cc_from_iri_(dCondIRI[ia, iy], iSurfaceType)
                 dCostRecurrentFin[ia, iy] = dCostRecurrentFin[ia, iy] * dRecMult[dCondCON[ia, iy] - 1]
                 dCostRecurrentEco[ia, iy] = dCostRecurrentEco[ia, iy] * dRecMult[dCondCON[ia, iy] - 1]
 
@@ -472,7 +473,7 @@ class CostBenefitAnalysisModel:
             "aadt": dAADT[12].tolist(),
             "truck_percent": dTRucks,
             "vehicle_utilization": dUtilization,
-            "esa_loading": dESATotal[1],
+            "esa_loading": dESATotal[0],
             "iri_projection": dCondIRI[iTheSelected].tolist(),
             "iri_base": dCondIRI[0].tolist(),
             "con_projection": dCondCON[iTheSelected].tolist(),
@@ -574,6 +575,9 @@ class CostBenefitAnalysisModel:
                     + dAADT[iv, iy] * self.dVehicleFleet[iv, 0] / 1000000 * 365 / self.dWidthDefaults[iLanes - 1, 1]
                 )
 
+        # a = [0.003078775,0.00324502885,0.0034202604079,0.0036049544699266,0.00379962201130264,0.00400480159991298,0.00422106088630828,0.00444899817416893,0.00468924407557405,0.00494246325565505,0.00520935627146042,0.00549066151011928,0.00578715723166573,0.00609966372217567,0.00642904556317316,0.00677621402358451,0.00714212958085807,0.00752780457822441,0.00793430602544853,0.00836275855082275]
+        # b = 0.00307877,0.00324503,0.00342026,0.00360495,0.00379962,0.00400480, 0.00422106,0.004449,  0.00468924,0.00494246,0.00520936,0.00549066, 0.00578716,0.00609966,0.00642905,0.00677621,0.00714213,0.0075278, 0.00793431,0.00836276]
+        print(dESATotal)
         return dESATotal
 
     def compute_trucks_percent(self, dAADT):
@@ -586,18 +590,10 @@ class CostBenefitAnalysisModel:
         return dUtilization
 
     def get_initial_roughness(self, section: Section) -> Section:
-        if section.roughness == 0 and section.condition_class == 0:
-            raise ValueError("Must define either roughness or road condition class")
-        if section.roughness == 0:
-            roughness, pavementAge = dConditionData[section.surface_type - 1, section.condition_class - 1]
-            section.roughness = roughness
-
-        if section.condition_class == 0:
-            section.condition_class = get_cc_from_iri(self.iri_cc_df, section.roughness, section.surface_type)
 
         return section
 
-    def fill_default_road_type(self, section: Section) -> Section:
+    def fill_defaults(self, section: Section) -> Section:
         if section.road_type == 0 and section.surface_type == 0:
             raise ValueError("Must define either road type or road surface type")
         if section.surface_type == 0:
@@ -611,59 +607,48 @@ class CostBenefitAnalysisModel:
         # Width and Number of Lanes Class
         if section.width == 0 and section.lanes == 0:
             raise ValueError("Must define either road width or number of lanes")
-
         if section.width == 0:
             section.width = dWidthDefaults(section.lanes, 1)
         if section.lanes == 0:
             section.lanes = self.get_default_lanes(section.width)
 
+        # Roughness, Pavement Age and Road Condition
+        if section.roughness == 0 and section.condition_class == 0:
+            raise ValueError("Must define either roughness or road condition class")
+        if section.condition_class == 0:
+            section.condition_class = get_cc_from_iri(self.iri_cc_df, section.roughness, section.surface_type)
+        roughness, pavement_age = dConditionData[section.surface_type - 1, section.condition_class - 1]
+        if section.roughness == 0:
+            section.roughness = roughness
+        if section.pavement_age == 0:
+            section.pavement_age = pavement_age
+
+        # Structural Number
+        if section.structural_no == 0:
+            if section.surface_type < 4:
+                section.structural_no = dTrafficLevels(section.traffic_level, 13 + section.condition_class)
+
+        # Traffic Level and Traffic Data
+        if section.traffic_level == 0 and section.aadt_total == 0:
+            raise ValueError("Must define either traffic level class or traffic data")
+
+        if section.aadt_total == 0:
+            print(section.get_aadts())
+            section.aadt_total = dTrafficLevels[section.traffic_level - 1, 0]
+            proportions = dTrafficLevels[section.traffic_level - 1, 1:13]
+            section.set_aadts(proportions * section.aadt_total)
+            print(section.get_aadts())
+
+        calc_aadt_total = sum(section.get_aadts())
+        if calc_aadt_total != section.aadt_total:
+            raise ValueError(f"Sum of veh. class AADT ({calc_aadt_total}) != total AADT ({section.aadt_total})")
+
+        if section.traffic_level == 0:
+            section.traffic_level = default_from_range_lookup(
+                traffic_ranges, section.aadt_total, value_col="traffic_class"
+            )
+
+        return section
+
     def get_default_lanes(self, width):
         return default_from_range_lookup(self.default_lanes, width, "lower_width", "upper_width", "lanes")
-
-
-"""
-
-        ' Roughess and Road Condition Class
-        if dRoughness ==0 And iConditionClass ==0 :
-            MsgBox "Error: Both road condition class and roughness are empty on row " & iRow & ". Program will terminate. "
-            Exit Sub
-        End if
-        if dRoughness ==0 :
-            dRoughness = dConditionData(iSurfaceType, iConditionClass, 1)
-        End if
-
-        ' Pavement Age
-        if iPavementAge ==0 :
-            iPavementAge = dConditionData(iSurfaceType, iConditionClass, 2)
-        End if
-        ' Structural Number
-        if dStructuralNo ==0 :
-            if iSurfaceType < 4 :
-                dStructuralNo = dTrafficLevels(iTrafficLevel, 13 + iConditionClass)
-            End if
-        End if
-        ' Traffic Level and Traffic Data
-        if iTrafficLevel ==0 And dAADT(13, 1) ==0 :
-            MsgBox "Error: Both traffic level class and traffic data are empty on row " & iRow & ". Program will terminate. "
-            Exit Sub
-        End if
-        if dAADT(13, 1) ==0 :
-            dAADT(13, 1) = dTrafficLevels(iTrafficLevel, 1)
-            For iv = 1 To 12
-                dAADT(iv, 1) = dAADT(13, 1) * dTrafficLevels(iTrafficLevel, 1 + iv)
-            Next iv
-        Else
-            dTemp ==0
-            For iv = 1 To 12
-                dTemp = dTemp + dAADT(iv, 1)
-            Next iv
-            if dTemp <> dAADT(13, 1) :
-                MsgBox "Error: Traffic composition total is not the same as total traffic for row " & iRow & ". Program will terminate. "
-                Exit Sub
-            End if
-        
-        End if
-        if iTrafficLevel ==0 :
-            iTrafficLevel = Application.WorksheetFunction.VLookup(dAADT(13, 1), Range("TrafficRanges"), 3)
-        End if
-"""
