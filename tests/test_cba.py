@@ -1,4 +1,3 @@
-import math
 import unittest
 from os.path import join, dirname
 
@@ -6,6 +5,7 @@ import roads_cba_py.cba as cba
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import get_cc_from_iri_
 from roads_cba_py.section import Section
+from roads_cba_py.utils import print_diff, check, comp
 
 
 class TestCbaModel(unittest.TestCase):
@@ -17,45 +17,75 @@ class TestCbaModel(unittest.TestCase):
     def test_simple(self):
 
         ident = "615073_305"
-        input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
-        expected_output = CbaResult.load_from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
 
-        actual_output = self.cba_model.compute_cba_for_section(input)
+        idents = [
+            "603159_301",
+            "603646_298",
+            "614761_296",
+            "614791_297",
+            "614818_300",
+            "614835_302",
+            "614835_303",
+            "614835_304",
+            "614896_297",
+            "614947_295",
+            "614984_299",
+            "614987_298",
+            "614991_298",
+            "615061_299",
+            "615069_299",
+            "615073_305",
+            "615080_302",
+            "615080_303",
+            "615082_303",
+            "615093_302",
+            "615093_303",
+            "615101_299",
+            "615107_299",
+            "615110_299",
+            "615129_298",
+            "615129_299",
+            "615130_299",
+            "615131_298",
+            "615136_298",
+            "615137_298",
+            "615139_298",
+            "615143_299",
+            "615144_299",
+            "615151_299",
+            "615152_299",
+            "615156_299",
+            "615160_301",
+            "615161_299",
+            "615163_301",
+            "615164_299",
+            "615167_304",
+            "615167_305",
+            "615177_299",
+            "615177_300",
+            "615184_300",
+            "615185_298",
+            "615187_298",
+            "615188_298",
+            "615196_298",
+            "615199_303",
+            "615205_298",
+            "615207_298",
+            "615231_300",
+            "615237_302",
+            "615237_303",
+            "615243_299",
+            "615244_299",
+            "635950_304",
+        ]
 
-        def comp(a, b):
-            def check(x, y):
-                if isinstance(x, str) or isinstance(x, int) or x is None:
-                    return x == y
-                if isinstance(x, float):
-                    return math.isclose(x, y)
-                if isinstance(x, list):
-                    if len(x) == 10 and len(y) == 20:
-                        y = y[0:10]
-                    if len(y) == 10 and len(x) == 20:
-                        x = x[0:10]
-                    return all(math.isclose(xx, yy) for xx, yy in zip(x, y))
-                raise ValueError(type(x))
+        for ident in idents:
+            print(f"COMPARING {ident}")
+            input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+            expected_output = CbaResult.load_from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
+            actual_output = self.cba_model.compute_cba_for_section(input)
 
-            def print_diff(k, v1, v2):
-                if isinstance(v1, list):
-                    if len(v1) == 10 and len(v2) == 20:
-                        v2 = v2[0:10]
-                    if len(v2) == 10 and len(v1) == 20:
-                        v1 = v1[0:10]
-                    print(f"{k}:")
-                    return [
-                        print(f"    {x:>2.3f} {'==' if x == y else '!='} {y:>2.3f} ({x - y})") for x, y in zip(v1, v2)
-                    ]
-
-                return print(f"{k} => {v1} != {b[k]}")
-
-            a = a.__dict__["_data"]
-            b = b.__dict__["_data"]
-            diffs = [print_diff(k, v1, b[k]) for k, v1 in a.items() if not check(v1, b[k])]
-            [print(d) for d in diffs]
-            return diffs
-
-        comp(expected_output, actual_output)
+            comp(expected_output, actual_output)
         # self.assertEqual(expected_output.__dict__["_data"], actual_output.__dict__["_data"])
 
         # self.assertEqual(expected_output.npv, actual_output.npv)
