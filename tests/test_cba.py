@@ -79,6 +79,8 @@ class TestCbaModel(unittest.TestCase):
             "635950_304",
         ]
 
+        # idents = ["615167_304"]
+        # idents = ["614947_295", "614791_297", "614984_299", "614987_298"]
         for ident in idents:
             print(f"COMPARING {ident}")
             input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))

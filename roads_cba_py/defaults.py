@@ -27,10 +27,10 @@ dGrowth = dGrowth / 100
 # 2. Traffic Levels
 dTrafficLevels = np.array(
     #   <-------------- vehicle type ------------------------------->
-    #              s.car       delv       m.trk      a.trk m.bus  tot  <- condition class ->
-    [  # vol mbike      m.car       s.trk       l.trk   s.bus  l.bus  13   14   15   16   17
-        [25, 0.75, 0.02, 0.05, 0.01, 0.01, 0.12, 0.03, 0, 0, 0, 0, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
-        [75, 0.75, 0.02, 0.05, 0.01, 0.01, 0.12, 0.03, 0, 0, 0, 0, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
+    #              s.car       4wd        s.trk     l.trk s.bus  l.bus  <- condition class + 12 ->
+    [  # vol mbike      m.car        delv       m.trk   a.trk m.bus   13   14   15   16   17
+        [25, 0.75, 0.02, 0.05, 0.01, 0.01, 0.12, 0.03, 0, 0, 0.01, 0, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
+        [75, 0.75, 0.02, 0.05, 0.01, 0.01, 0.12, 0.03, 0, 0, 0.01, 0, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
         [175, 0.65, 0.03, 0.07, 0.02, 0.02, 0.13, 0.04, 0.01, 0, 0.02, 0.01, 0, 1.5, 1.5, 1.5, 1.5, 1.5],
         [375, 0.65, 0.03, 0.07, 0.02, 0.02, 0.13, 0.04, 0.01, 0, 0.02, 0.01, 0, 2.0, 2.0, 2.0, 2.0, 2.0],
         [750, 0.5, 0.05, 0.09, 0.04, 0.04, 0.15, 0.06, 0.02, 0, 0.04, 0.01, 0, 3.0, 3.0, 3.0, 3.0, 3.0],
@@ -168,14 +168,30 @@ dRoadWorks = np.array(
         ["Reconstruction Type II", "B-R5", "Rehabilitation", 397.0, 397.0, 397.0, 2.0, 0, 0, 0, None, None, 5.0, 4, 8],
         ["Reconstruction Type I", "B-R6", "Rehabilitation", 397.0, 397.0, 397.0, 2.0, 0, 0, 0, None, None, 6.0, 4, 8],
         ["Regravelling (Gravel)", "G-P", "Periodic", 37.0, 37.0, 37.0, 12.0, 0, 0, 0, None, None, None, 12, 4],
-        ["Reconstruction (Gravel)", "G-R", "Rehabiliation", 114.0, 114.0, 114.0, 7.0, 0, 0, 0, None, None, None, 12, 4],
+        [
+            "Reconstruction (Gravel)",
+            "G-R",
+            "Rehabilitation",
+            114.0,
+            114.0,
+            114.0,
+            7.0,
+            0,
+            0,
+            0,
+            None,
+            None,
+            None,
+            12,
+            4,
+        ],
         ["Heavy Grading (Earth)", "E-P", "Periodic", 16.0, 16.0, 16.0, 16.0, 0, 0, 0, None, None, None, 14, 4],
-        ["Reconstruction (Earth)", "E-R", "Rehabiliation", 24.0, 24.0, 24.0, 10.0, 0, 0, 0, None, None, None, 14, 4],
+        ["Reconstruction (Earth)", "E-R", "Rehabilitation", 24.0, 24.0, 24.0, 10.0, 0, 0, 0, None, None, None, 14, 4],
         ["Periodic Maintenance (Macadam)", "M-P", "Periodic", 37.0, 37.0, 37.0, 8.0, 0, 0, 0, None, None, None, 16, 8],
         [
             "Reconstruction (Macadam)",
             "M-R",
-            "Rehabiliation",
+            "Rehabilitation",
             114.0,
             114.0,
             114.0,
@@ -209,7 +225,7 @@ dRoadWorks = np.array(
         [
             "Reconstruction (Cobblestone)",
             "O-R",
-            "Rehabiliation",
+            "Rehabilitation",
             114.0,
             114.0,
             114.0,
@@ -3254,6 +3270,8 @@ def get_cc_from_iri_(iri, surface_type):
 
 
 def default_from_range_lookup(df, v, lower_col="lower", upper_col="upper", value_col="value"):
+    if isinstance(v, str):
+        print(v)
     rows = df.query(f"@v >= {lower_col} & @v < {upper_col}")
     if len(rows) != 1:
         raise ValueError(f"Can't find default value for {v} in ({lower_col},{upper_col})")

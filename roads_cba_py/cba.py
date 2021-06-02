@@ -59,6 +59,7 @@ class CostBenefitAnalysisModel:
         """
 
         # Step 1: Get input attributes from section
+        section = self.fill_defaults(section)
         dLength = section.length
         iLanes = section.lanes
         dWidth = section.width
@@ -69,7 +70,6 @@ class CostBenefitAnalysisModel:
         iRoadType = section.road_type
         iSurfaceType = section.surface_type
         iConditionClass = section.condition_class
-        section = self.fill_defaults(section)
 
         dStructuralNo = section.structural_no
         iPavementAge = section.pavement_age
@@ -331,7 +331,8 @@ class CostBenefitAnalysisModel:
                     dYearRoughness = self.calculate_next_year_roughness(
                         dYearRoughness, iYearAge, ia, iy, iTemperature, iMoisture, dCondSNC, dESATotal, iCondSurface
                     )
-                    dYearRoughness = min(16, dYearRoughness)
+                    max_roughness = 25.0 if iCondSurface[ia, iy] in (4, 5) else 16.0
+                    dYearRoughness = min(max_roughness, dYearRoughness)
 
                 iYearAge = iYearAge + 1
 
@@ -458,140 +459,6 @@ class CostBenefitAnalysisModel:
 
         # pyear("iri_base", dCondIRI[0])
 
-        # py_base = [
-        #     2.304608790822995,
-        #     2.4325276036835137,
-        #     2.56838749506294,
-        #     2.712714155243398,
-        #     2.8660705898449788,
-        #     3.029059930194085,
-        #     3.2023284618220442,
-        #     3.386568887696187,
-        #     3.5825238439141,
-        #     21.150218522627824,
-        #     3.3854766824077243,
-        #     3.5652924713983647,
-        #     3.7550910296157882,
-        #     3.9554366893162256,
-        #     4.166926629382785,
-        #     4.39019287428019,
-        #     4.625904422473535,
-        #     12.950291662426048,
-        #     5.259898438014553,
-        #     5.547443449468394,
-        # ]
-        # ex_base = [
-        #     2.304608790823,
-        #     2.43252760368351,
-        #     2.56838749506294,
-        #     2.7127141552434,
-        #     2.86607058984498,
-        #     3.02905993019408,
-        #     3.20232846182204,
-        #     3.38656888769619,
-        #     3.5825238439141,
-        #     21.1502185226278,
-        #     3.38547668240772,
-        #     3.56529247139836,
-        #     3.75509102961579,
-        #     3.95543668931622,
-        #     4.16692662938278,
-        #     4.39019287428019,
-        #     4.62590442247353,
-        #     12.950291662426,
-        #     5.25989843801455,
-        #     5.54744344946839,
-        # ]
-
-        # ex_12 = [
-        #     2.304608790823,
-        #     2.43252760368351,
-        #     2.56838749506294,
-        #     2.7127141552434,
-        #     2.86607058984498,
-        #     10.6743643415304,
-        #     2.85668405135893,
-        #     3.00965836278679,
-        #     3.1714035463168,
-        #     3.34244145103517,
-        #     3.52332668784384,
-        #     3.71464883373984,
-        #     3.91703479610086,
-        #     12.0276853483302,
-        #     4.28569300232343,
-        #     4.51868628165631,
-        #     4.76503836767129,
-        #     5.02554408224907,
-        #     5.30104814638622,
-        #     5.59244853750573,
-        # ]
-        # py_12 = [
-        #     2.304608790822995,
-        #     2.4325276036835137,
-        #     2.56838749506294,
-        #     2.712714155243398,
-        #     2.8660705898449788,
-        #     10.67436434153037,
-        #     2.8566840513589327,
-        #     3.0096583627867886,
-        #     3.1714035463168053,
-        #     3.34244145103517,
-        #     3.5233266878438396,
-        #     3.7146488337398456,
-        #     3.917034796100861,
-        #     12.027685348330184,
-        #     4.285693002323433,
-        #     4.518686281656316,
-        #     4.765038367671294,
-        #     5.0255440822490725,
-        #     5.301048146386224,
-        #     5.592448537505731,
-        # ]
-        # py_net = [
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     0.0,
-        #     -7.645304411336285,
-        #     0.34564441046311156,
-        #     0.37691052490939825,
-        #     0.41112029759729474,
-        #     17.807777071592653,
-        #     -0.13785000543611536,
-        #     -0.14935636234148086,
-        #     -0.1619437664850727,
-        #     -8.072248659013958,
-        #     -0.11876637294064807,
-        #     -0.12849340737612547,
-        #     -0.13913394519775935,
-        #     7.924747580176976,
-        #     -0.041149708371670535,
-        #     -0.04500508803733627,
-        # ]
-        # ex_net = [
-        #     0,
-        #     0,
-        #     0,
-        #     0,
-        #     0,
-        #     -7.64530441133628,
-        #     0.345644410463112,
-        #     0.376910524909399,
-        #     0.411120297597296,
-        #     17.8077770715927,
-        #     -0.137850005436115,
-        #     -0.149356362341481,
-        #     -0.161943766485072,
-        #     -8.07224865901396,
-        #     -0.118766372940648,
-        #     -0.128493407376124,
-        #     -0.139133945197761,
-        #     7.92474758017698,
-        #     -0.0411497083716688,
-        #     -0.0450050880373363,
-        # ]
-
         # print(f"cost total for base")
         # print(",".join(map(str, dCostTotal[0, :])))
         # print_diff(f"cost totals (by year) for base {0}", ex_base, py_base)
@@ -601,6 +468,51 @@ class CostBenefitAnalysisModel:
         # print(f"net total for {iTheSelected}")
         # print(",".join(map(str, dNetTotal[iTheSelected, :])))
         # print_diff(f"net diff (by year) for alternative {iTheSelected}", ex_net, py_net)
+
+        esa_ex = [
+            0.000458075,
+            0.00048281105,
+            0.0005088828467,
+            0.0005363625204218,
+            0.000565326096524577,
+            0.000595853705736904,
+            0.000628029805846697,
+            0.000661943415362419,
+            0.00069768835979199,
+            0.000735363531220757,
+            0.000775073161906678,
+            0.000816927112649638,
+            0.000861041176732719,
+            0.000907537400276286,
+            0.000956544419891205,
+            0.00100819781856533,
+            0.00106264050076786,
+            0.00112002308780932,
+            0.00118050433455103,
+            0.00124425156861678,
+        ]
+        esa_py = [
+            5.7259375e-05,
+            6.035138125e-05,
+            6.36103558375e-05,
+            6.7045315052725e-05,
+            7.066576206557216e-05,
+            7.448171321711306e-05,
+            7.850372573083716e-05,
+            8.274292692030236e-05,
+            8.721104497399869e-05,
+            9.192044140259464e-05,
+            9.688414523833475e-05,
+            0.00010211588908120481,
+            0.0001076301470915899,
+            0.00011344217503453574,
+            0.00011956805248640067,
+            0.00012602472732066634,
+            0.00013283006259598229,
+            0.00014000288597616534,
+            0.00014756304181887827,
+            0.00015553144607709772,
+        ]
 
         # npv = [dNetTotal[iTheSelected, iy] / ((1 + self.dDiscount_Rate) ** (iy)) for iy in range(20)]
         # print(f"npv: {sum(npv)}")
@@ -678,6 +590,7 @@ class CostBenefitAnalysisModel:
 
         surface_condition = iCondSurface[ia, iy]
         foo, const, Kgp, Kgm, a0, a1, a2 = self.dRoadDet[surface_condition - 1, 0:7]
+        # print(ia, iy, surface_condition, foo, const, Kgp, Kgm, a0, a1, a2)
 
         # Surface condition classes 1,4,5,6,7 always use constant deterioration factors
         # classes 2 & 3 use them when the FOO is 1
@@ -726,7 +639,7 @@ class CostBenefitAnalysisModel:
 
         # a = [0.003078775,0.00324502885,0.0034202604079,0.0036049544699266,0.00379962201130264,0.00400480159991298,0.00422106088630828,0.00444899817416893,0.00468924407557405,0.00494246325565505,0.00520935627146042,0.00549066151011928,0.00578715723166573,0.00609966372217567,0.00642904556317316,0.00677621402358451,0.00714212958085807,0.00752780457822441,0.00793430602544853,0.00836275855082275]
         # b = 0.00307877,0.00324503,0.00342026,0.00360495,0.00379962,0.00400480, 0.00422106,0.004449,  0.00468924,0.00494246,0.00520936,0.00549066, 0.00578716,0.00609966,0.00642905,0.00677621,0.00714213,0.0075278, 0.00793431,0.00836276]
-        # print(dESATotal)
+        # print(",".join(map(str, dESATotal)))
         return dESATotal
 
     def compute_trucks_percent(self, dAADT):
@@ -784,9 +697,11 @@ class CostBenefitAnalysisModel:
         if section.aadt_total == 0:
             # print(section.get_aadts())
             section.aadt_total = dTrafficLevels[section.traffic_level - 1, 0]
+            # print(section.aadt_total)
             proportions = dTrafficLevels[section.traffic_level - 1, 1:13]
+            # print(proportions, sum(proportions))
             section.set_aadts(proportions * section.aadt_total)
-            # print(section.get_aadts())
+            # print(section.traffic_level, section.get_aadts(), sum(section.get_aadts()))
 
         calc_aadt_total = sum(section.get_aadts())
         if calc_aadt_total != section.aadt_total:
@@ -800,4 +715,4 @@ class CostBenefitAnalysisModel:
         return section
 
     def get_default_lanes(self, width):
-        return default_from_range_lookup(self.default_lanes, width, "lower_width", "upper_width", "lanes")
+        return int(default_from_range_lookup(self.default_lanes, width, "lower_width", "upper_width", "lanes"))

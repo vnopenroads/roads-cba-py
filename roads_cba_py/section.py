@@ -32,7 +32,7 @@ class Section(Model):
     end_km = FloatType()
     length = FloatType(required=True)
     lanes = IntType()
-    width = StringType()
+    width = FloatType()
     road_class = IntType()
     terrain = IntType()
     temperature = IntType()

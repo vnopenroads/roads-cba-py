@@ -25,9 +25,11 @@ def check(x, y):
 
 def comp_str(x, y):
     eq = "==" if x == y else "!="
+    if isinstance(x, str) or isinstance(y, str):
+        return f"{x: >20} {eq} {y: >20}"
     abs_ = abs(x - y)
     den = max(x, y)
-    rel = (x - y) / den * 100.0 if x != 0 else 0
+    rel = (x - y) / den * 100.0 if den != 0 else 0
     return f"{x: > 2.3f} {eq} {y: > 2.3f} ({rel: > 03.2f}%) ({abs_ : > 3.3f}) "
 
 
