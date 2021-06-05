@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import unittest
 import glob
 import warnings
@@ -12,7 +13,6 @@ import roads_cba_py.cba as cba
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import get_cc_from_iri_
 from roads_cba_py.section import Section
-from roads_cba_py.utils import print_diff, check, comp
 
 
 class TestCbaModel(unittest.TestCase):
@@ -25,18 +25,28 @@ class TestCbaModel(unittest.TestCase):
     def test_all_data_matches(self):
 
         files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
-        files = sample(files, 10)
+        files = files[0:10]
+        # files = sample(files, 10)
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
 
-        for ident in idents:
+        def process_ident(ident):
             input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
-            expected_output = CbaResult.load_from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
-            actual_output = self.cba_model.compute_cba_for_section(input)
+            return self.cba_model.compute_cba_for_section(input)
+
+        start = time.time()
+        actual_outputs = {ident: process_ident(ident) for ident in idents}
+        print(f"Time: {time.time() - start}")
+
+        for ident, actual_output in actual_outputs.items():
+            expected_output = CbaResult.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
             diffs = {
-                k: v
+                k: [actual_output.to_dict()[k], expected_output.to_dict()[k], v]
                 for k, v in actual_output.compare(expected_output).items()
                 if ((isinstance(v, float) and v != 0.0) or (isinstance(v, str) and "==" not in v))
             }
+            if diffs != {}:
+                for k, v in diffs.items():
+                    print(k, v)
             self.assertEqual({}, diffs)
 
     def test_defaults(self):

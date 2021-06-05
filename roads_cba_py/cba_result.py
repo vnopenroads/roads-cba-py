@@ -6,6 +6,7 @@ from schematics.types import StringType, FloatType, ListType
 
 
 class CbaResult(Model):
+    orma_way_id = StringType(max_length=20, min_length=1)
     work_class = StringType(required=True, min_length=1)
     work_type = StringType(required=True, min_length=1)
     work_name = StringType(required=True, min_length=1)
@@ -31,7 +32,7 @@ class CbaResult(Model):
         return str(self.to_primitive())
 
     @classmethod
-    def load_from_file(cls, filename):
+    def from_file(cls, filename):
         with open(filename) as f:
             return CbaResult(json.load(f))
 

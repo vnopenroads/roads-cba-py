@@ -1,6 +1,8 @@
 import os
 from os.path import join, abspath
 import sys
+import glob
+import re
 import json
 import geopandas as gpd
 import pandas as pd
@@ -13,6 +15,9 @@ import shapely.wkb
 import matplotlib.pyplot as plt
 from ast import literal_eval
 from shapely.geometry import LineString
+
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
 
 
 src_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "roads_cba_py")

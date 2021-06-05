@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Optional
 
 from schematics.models import Model
 from schematics.types import IntType, StringType, FloatType
@@ -67,6 +67,58 @@ class Section(Model):
     def from_file(cls, filename):
         with open(filename) as f:
             return Section(json.load(f))
+
+    @staticmethod
+    def maybe_int(maybe_int: Optional[int]):
+        return int(maybe_int) if maybe_int else 0.0
+
+    @staticmethod
+    def maybe_float(maybe_float: Optional[float]):
+        return float(maybe_float) if maybe_float else 0.0
+
+    @classmethod
+    def from_row(cls, row):
+        in_data = {
+            "orma_way_id": row["way_id_district"],
+            "section_id": row["way_id_district"],
+            "road_number": row["road number"],
+            "road_name": row["name"],
+            "road_start": row["road start location"],
+            "road_end": row["road end location"],
+            "province": row["province"],
+            "district": row["district"],
+            "commune": row["section_commune_gso"],
+            "management": Section.maybe_int(row["management"]),
+            # "start_km": float(row["Start_Km"]),
+            # "end_km": float(row["End_Km"]),
+            "length": row["length"],
+            "lanes": Section.maybe_int(row["section_lanes"]),
+            "width": 6.0 if row["width"] == "6+" else Section.maybe_float(row["width"]),
+            "road_class": row["link_class"],
+            "terrain": row["section_terrain"],
+            "temperature": row["section_temperature"],
+            "moisture": row["section_moisture"],
+            "surface_type": row["section_surface"],
+            "condition_class": row["condition"],
+            "roughness": Section.maybe_float(row["iri"]),
+            "traffic_level": row["section_traffic"],
+            "traffic_growth": row["section_traffic_growth"],
+            "pavement_age": Section.maybe_int(row["section_pavement_age"]),
+            "aadt_motorcyle": Section.maybe_int(row["section_motorcycle"]),
+            "aadt_carsmall": Section.maybe_int(row["section_small_car"]),
+            "aadt_carmedium": Section.maybe_int(row["section_medium_car"]),
+            "aadt_delivery": Section.maybe_int(row["section_delivery_vehicle"]),
+            "aadt_4wheel": Section.maybe_int(row["section_four_wheel"]),
+            "aadt_smalltruck": Section.maybe_int(row["section_light_truck"]),
+            "aadt_mediumtruck": Section.maybe_int(row["section_medium_truck"]),
+            "aadt_largetruck": Section.maybe_int(row["section_heavy_truck"]),
+            "aadt_articulatedtruck": Section.maybe_int(row["section_articulated_truck"]),
+            "aadt_smallbus": Section.maybe_int(row["section_small_bus"]),
+            "aadt_mediumbus": Section.maybe_int(row["section_medium_bus"]),
+            "aadt_largebus": Section.maybe_int(row["section_large_bus"]),
+            "aadt_total": Section.maybe_int(row["aadt"]),
+        }
+        return Section(in_data)
 
     def set_aadts(self, aadts: List[float]):
         (
