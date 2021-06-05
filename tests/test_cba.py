@@ -2,7 +2,10 @@ import os
 import re
 import unittest
 import glob
+import warnings
 from os.path import join, dirname
+
+import schematics
 
 import roads_cba_py.cba as cba
 from roads_cba_py.cba_result import CbaResult
@@ -16,34 +19,34 @@ class TestCbaModel(unittest.TestCase):
 
     def setUp(self) -> None:
         self.cba_model = cba.CostBenefitAnalysisModel()
+        warnings.filterwarnings("ignore", category=schematics.deprecated.SchematicsDeprecationWarning)
 
-    def test_simple(self):
+    def test_all_data_matches(self):
 
         files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
-        idents = ["637227_299"]
 
-        for ident in idents:
+        for ident in idents[0:20]:
             print(f"COMPARING {ident}")
             input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
             expected_output = CbaResult.load_from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
             actual_output = self.cba_model.compute_cba_for_section(input)
-            print(actual_output.compare(expected_output))
+            print(
+                {
+                    k: v
+                    for k, v in actual_output.compare(expected_output).items()
+                    if ((isinstance(v, float) and v != 0.0) or (isinstance(v, str) and "==" not in v))
+                }
+            )
 
             comp(expected_output, actual_output)
-        # self.assertEqual(expected_output.__dict__["_data"], actual_output.__dict__["_data"])
-
-        # self.assertEqual(expected_output.npv, actual_output.npv)
-
-        # aadt => [175.0, 184.45000000000002, 194.4103, 204.9084562, 215.9735128348, 227.63608252787918, 239.92843098438468, 252.88456625754148, 266.54033283544874, 280.933510808563]
-        #         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     def test_defaults(self):
         ident = "615073_305"
         section = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
 
         self.assertEqual(0, section.roughness)
-        section = self.cba_model.get_initial_roughness(section)
+        section = self.cba_model.fill_defaults(section)
         self.assertEqual(7.0, section.roughness)
 
         self.assertEqual(1, self.cba_model.get_default_lanes(0.1))
@@ -55,7 +58,7 @@ class TestCbaModel(unittest.TestCase):
 
         section.condition_class = 0
         section.road_type = 3
-        section = self.cba_model.get_initial_roughness(section)
+        section = self.cba_model.fill_defaults(section)
         self.assertEqual(7.0, section.roughness)
         self.assertEqual(3, section.condition_class)
 

@@ -1,5 +1,6 @@
 import json
 
+from numpy import isnan
 from schematics import Model
 from schematics.types import StringType, FloatType, ListType
 
@@ -74,6 +75,8 @@ class CbaResult(Model):
             eq = "==" if x == y else "!="
             if isinstance(x, str) or isinstance(y, str):
                 return f"{x: >20} {eq} {y: >20}"
+            if isnan(x) and isnan(y):
+                return 0
             if abs(x - y) < 0.000001:
                 return 0
             return x - y

@@ -1,4 +1,5 @@
 import numpy as np
+from numpy_financial import irr
 
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import (
@@ -487,7 +488,7 @@ class CostBenefitAnalysisModel:
             "npv": dSolNPV[iTheSelected],
             "npv_km": dSolNPVKm[iTheSelected],
             "npv_cost": dSolNPVCost[iTheSelected],
-            "eirr": dSolIRR[iTheSelected],
+            "eirr": irr(dNetTotal[iTheSelected]),
             "aadt": dAADT[12].tolist(),
             "truck_percent": dTRucks,
             "vehicle_utilization": dUtilization,
@@ -607,10 +608,6 @@ class CostBenefitAnalysisModel:
         for iv in range(0, 12):
             dUtilization = dUtilization + dAADT[iv, 0] * dLength * 365 / 1000000
         return dUtilization
-
-    def get_initial_roughness(self, section: Section) -> Section:
-
-        return section
 
     def fill_defaults(self, section: Section) -> Section:
         if section.road_type == 0 and section.surface_type == 0:
