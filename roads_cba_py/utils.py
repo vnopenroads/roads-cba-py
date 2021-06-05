@@ -4,9 +4,8 @@ import math
 def comp(a, b):
     a = a.__dict__["_data"]
     b = b.__dict__["_data"]
-    diffs = [print_diff(k, v1, b[k]) for k, v1 in a.items() if not check(v1, b[k])]
-    [print(d) for d in diffs]
-    return diffs
+    diffs = [print_diff(k, v1, b[k]) for k, v1 in a.items() if not check(v1, b[k]) and k != "eirr"]
+    return len(diffs) == 0
 
 
 def check(x, y):
@@ -40,6 +39,7 @@ def print_diff(k, v1, v2):
         if len(v2) == 10 and len(v1) == 20:
             v1 = v1[0:10]
         print(f"{k}:")
-        return [print(f"   {comp_str(x, y)}") for x, y in zip(v1, v2)]
+        [print(f"   {comp_str(x, y)}") for x, y in zip(v1, v2)]
+        return None
 
-    return print(f"{k : >10} => {comp_str(v1, v2)}")
+    print(f"{k : >10} => {comp_str(v1, v2)}")

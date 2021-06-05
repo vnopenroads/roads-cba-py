@@ -1,10 +1,7 @@
-import bisect
-
 import numpy as np
-import pandas as pd
 
-from .cba_result import CbaResult
-from .defaults import (
+from roads_cba_py.cba_result import CbaResult
+from roads_cba_py.defaults import (
     dDiscount_Rate,
     dEconomic_Factor,
     dGrowth,
@@ -28,8 +25,8 @@ from .defaults import (
     get_cc_from_iri_,
     traffic_ranges,
 )
-from .section import Section
-from .utils import print_diff
+from roads_cba_py.section import Section
+from roads_cba_py.utils import print_diff
 
 
 class CostBenefitAnalysisModel:
@@ -137,7 +134,7 @@ class CostBenefitAnalysisModel:
         dSolNPVCost = np.zeros((13,), dtype=np.float64)  # As Double ' alternatives
         sSolClass = np.empty((13,), dtype="<U30")  # As String ' alternatives
         sSolCode = np.empty((13,), dtype="<U30")  # As String ' alternatives
-        sSolName = np.empty((13,), dtype="<U30")  # As String ' alternatives
+        sSolName = np.empty((13,), dtype="<U35")  # As String ' alternatives
         dSolCost = np.zeros((13,), dtype=np.float64)  # As Double ' alternatives
         dSolCostkm = np.zeros((13,), dtype=np.float64)  # As Double ' alternatives
         iSolYear = np.zeros((13,), dtype=np.float64)  # As Double ' alternatives
@@ -163,10 +160,13 @@ class CostBenefitAnalysisModel:
             iTheWork = int(dAlternatives[ia, 0])
             iTheYear = int(dAlternatives[ia, 1])
             iTheRepair = self.dRoadWorks[iTheWork - 1, 13]
-            iTheRepairY1 = iTheYear + self.dRoadWorks[iTheWork - 1, 14]
-            iTheRepairY2 = iTheRepairY1 + self.dRoadWorks[iTheWork - 1, 14]
-            iTheRepairY3 = iTheRepairY2 + self.dRoadWorks[iTheWork - 1, 14]
-            iTheRepairY4 = iTheRepairY3 + self.dRoadWorks[iTheWork - 1, 14]
+            repair_period = self.dRoadWorks[iTheWork - 1, 14]
+            iTheRepairY1 = iTheYear + repair_period
+            iTheRepairY2 = iTheRepairY1 + repair_period
+            iTheRepairY3 = iTheRepairY2 + repair_period
+            iTheRepairY4 = iTheRepairY3 + repair_period
+
+            # print(iTheWork, iTheRepair, iTheYear, repair_period, iTheRepairY1, iTheRepairY2, iTheRepairY3, iTheRepairY4)
 
             dSolNPV[ia] = 0
 
@@ -468,51 +468,8 @@ class CostBenefitAnalysisModel:
         # print(f"net total for {iTheSelected}")
         # print(",".join(map(str, dNetTotal[iTheSelected, :])))
         # print_diff(f"net diff (by year) for alternative {iTheSelected}", ex_net, py_net)
-
-        esa_ex = [
-            0.000458075,
-            0.00048281105,
-            0.0005088828467,
-            0.0005363625204218,
-            0.000565326096524577,
-            0.000595853705736904,
-            0.000628029805846697,
-            0.000661943415362419,
-            0.00069768835979199,
-            0.000735363531220757,
-            0.000775073161906678,
-            0.000816927112649638,
-            0.000861041176732719,
-            0.000907537400276286,
-            0.000956544419891205,
-            0.00100819781856533,
-            0.00106264050076786,
-            0.00112002308780932,
-            0.00118050433455103,
-            0.00124425156861678,
-        ]
-        esa_py = [
-            5.7259375e-05,
-            6.035138125e-05,
-            6.36103558375e-05,
-            6.7045315052725e-05,
-            7.066576206557216e-05,
-            7.448171321711306e-05,
-            7.850372573083716e-05,
-            8.274292692030236e-05,
-            8.721104497399869e-05,
-            9.192044140259464e-05,
-            9.688414523833475e-05,
-            0.00010211588908120481,
-            0.0001076301470915899,
-            0.00011344217503453574,
-            0.00011956805248640067,
-            0.00012602472732066634,
-            0.00013283006259598229,
-            0.00014000288597616534,
-            0.00014756304181887827,
-            0.00015553144607709772,
-        ]
+        # print_diff(f"total cost (by year) for alternative {iTheSelected}", alt_cost_ex, alt_cost_py)
+        # print_diff(f"total cost (by year) for base ", base_cost_ex, base_cost_py)
 
         # npv = [dNetTotal[iTheSelected, iy] / ((1 + self.dDiscount_Rate) ** (iy)) for iy in range(20)]
         # print(f"npv: {sum(npv)}")

@@ -1,4 +1,7 @@
+import os
+import re
 import unittest
+import glob
 from os.path import join, dirname
 
 import roads_cba_py.cba as cba
@@ -16,76 +19,16 @@ class TestCbaModel(unittest.TestCase):
 
     def test_simple(self):
 
-        ident = "615073_305"
+        files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
+        idents = [re.match(".*section_(.*).json", f)[1] for f in files]
+        idents = ["637227_299"]
 
-        idents = [
-            "603159_301",
-            "603646_298",
-            "614761_296",
-            "614791_297",
-            "614818_300",
-            "614835_302",
-            "614835_303",
-            "614835_304",
-            "614896_297",
-            "614947_295",
-            "614984_299",
-            "614987_298",
-            "614991_298",
-            "615061_299",
-            "615069_299",
-            "615073_305",
-            "615080_302",
-            "615080_303",
-            "615082_303",
-            "615093_302",
-            "615093_303",
-            "615101_299",
-            "615107_299",
-            "615110_299",
-            "615129_298",
-            "615129_299",
-            "615130_299",
-            "615131_298",
-            "615136_298",
-            "615137_298",
-            "615139_298",
-            "615143_299",
-            "615144_299",
-            "615151_299",
-            "615152_299",
-            "615156_299",
-            "615160_301",
-            "615161_299",
-            "615163_301",
-            "615164_299",
-            "615167_304",
-            "615167_305",
-            "615177_299",
-            "615177_300",
-            "615184_300",
-            "615185_298",
-            "615187_298",
-            "615188_298",
-            "615196_298",
-            "615199_303",
-            "615205_298",
-            "615207_298",
-            "615231_300",
-            "615237_302",
-            "615237_303",
-            "615243_299",
-            "615244_299",
-            "635950_304",
-        ]
-
-        # idents = ["615167_304"]
-        # idents = ["614947_295", "614791_297", "614984_299", "614987_298"]
         for ident in idents:
             print(f"COMPARING {ident}")
             input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
             expected_output = CbaResult.load_from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
             actual_output = self.cba_model.compute_cba_for_section(input)
+            print(actual_output.compare(expected_output))
 
             comp(expected_output, actual_output)
         # self.assertEqual(expected_output.__dict__["_data"], actual_output.__dict__["_data"])
