@@ -9,6 +9,7 @@ tqdm = "*"
 pandas = "*"
 schematics = "*"
 jupyterlab = "*"
+intervaltree = "*"
 
 [dev-packages]
 ipython = "*"
