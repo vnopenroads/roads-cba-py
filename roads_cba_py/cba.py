@@ -21,12 +21,12 @@ from roads_cba_py.defaults import (
     dSPEED,
     dRoadDet,
     iri_cc_df,
-    get_cc_from_iri,
+    cc_from_iri_lu,
     default_lanes,
-    default_from_range_lookup,
-    get_cc_from_iri_,
     traffic_ranges,
     alternatives,
+    traffic_range_lu,
+    lanes_lu,
 )
 from roads_cba_py.section import Section
 from roads_cba_py.utils import print_diff
@@ -166,8 +166,6 @@ class CostBenefitAnalysisModel:
             iTheRepair = alt.repair
             repair_years = [work_year + i * alt.repair_period for i in [1, 2, 3, 4]]
 
-            # print(iTheWork, iTheRepair, iTheYear, repair_period, iTheRepairY1, iTheRepairY2, iTheRepairY3, iTheRepairY4)
-
             dSolNPV[ia] = 0
 
             for iy in range(20):
@@ -296,7 +294,7 @@ class CostBenefitAnalysisModel:
                 ).sum()
 
                 # Pavement Condition Class function of rougness
-                dCondCON[ia, iy] = get_cc_from_iri_(dCondIRI[ia, iy], iSurfaceType)
+                dCondCON[ia, iy] = cc_from_iri_lu[iSurfaceType](dCondIRI[ia, iy])
                 dCostRecurrentFin[ia, iy] = dCostRecurrentFin[ia, iy] * dRecMult[dCondCON[ia, iy] - 1]
                 dCostRecurrentEco[ia, iy] = dCostRecurrentEco[ia, iy] * dRecMult[dCondCON[ia, iy] - 1]
 
@@ -326,29 +324,6 @@ class CostBenefitAnalysisModel:
                 iTheSelected = ia
                 dNPVMax = dSolNPV[ia]
 
-        # print out values by year
-        def pyear(desc, x):
-            print(f"======================\n{desc}\n======================")
-            for i in range(0, 20):
-                print(f"{i: >2}  {x[i]: 0.3}")
-
-        # pyear("iri_base", dCondIRI[0])
-
-        # print(f"cost total for base")
-        # print(",".join(map(str, dCostTotal[0, :])))
-        # print_diff(f"cost totals (by year) for base {0}", ex_base, py_base)
-        # print(f"cost total for {iTheSelected}")
-        # print(",".join(map(str, dCostTotal[iTheSelected, :])))
-        # print_diff(f"cost total (by year) for alternative {iTheSelected}", ex_12, py_12)
-        # print(f"net total for {iTheSelected}")
-        # print(",".join(map(str, dNetTotal[iTheSelected, :])))
-        # print_diff(f"net diff (by year) for alternative {iTheSelected}", ex_net, py_net)
-        # print_diff(f"total cost (by year) for alternative {iTheSelected}", alt_cost_ex, alt_cost_py)
-        # print_diff(f"total cost (by year) for base ", base_cost_ex, base_cost_py)
-
-        # npv = [dNetTotal[iTheSelected, iy] / ((1 + self.dDiscount_Rate) ** (iy)) for iy in range(20)]
-        # print(f"npv: {sum(npv)}")
-
         ###########################################################
         # Get the output results
         ###########################################################
@@ -373,6 +348,7 @@ class CostBenefitAnalysisModel:
             "con_base": dCondCON[0].tolist(),
             "financial_recurrent_cost": dCostRecurrentFin[iTheSelected].tolist(),
             "net_benefits": dNetTotal[iTheSelected].tolist(),
+            "orma_way_id": section.orma_way_id,
         }
         return CbaResult(results)
 
@@ -506,14 +482,12 @@ class CostBenefitAnalysisModel:
         if section.roughness == 0 and section.condition_class == 0:
             raise ValueError("Must define either roughness or road condition class")
         if section.condition_class == 0:
-            section.condition_class = get_cc_from_iri(self.iri_cc_df, section.roughness, section.surface_type)
+            section.condition_class = int(cc_from_iri_lu[section.surface_type](section.roughness))
         roughness, pavement_age = dConditionData[section.surface_type - 1, section.condition_class - 1]
         if section.roughness == 0:
             section.roughness = roughness
         if section.pavement_age == 0:
             section.pavement_age = pavement_age
-
-        # Structural Number
         if section.structural_no == 0:
             if section.surface_type < 4:
                 section.structural_no = dTrafficLevels(section.traffic_level, 13 + section.condition_class)
@@ -536,11 +510,9 @@ class CostBenefitAnalysisModel:
             raise ValueError(f"Sum of veh. class AADT ({calc_aadt_total}) != total AADT ({section.aadt_total})")
 
         if section.traffic_level == 0:
-            section.traffic_level = default_from_range_lookup(
-                traffic_ranges, section.aadt_total, value_col="traffic_class"
-            )
+            section.traffic_level = traffic_range_lu(section.aadt_total)
 
         return section
 
     def get_default_lanes(self, width):
-        return int(default_from_range_lookup(self.default_lanes, width, "lower_width", "upper_width", "lanes"))
+        return lanes_lu(width)

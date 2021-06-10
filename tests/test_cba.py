@@ -5,13 +5,13 @@ import unittest
 import glob
 import warnings
 from os.path import join, dirname
+from pstats import SortKey
 from random import sample
 
 import schematics
 
 import roads_cba_py.cba as cba
 from roads_cba_py.cba_result import CbaResult
-from roads_cba_py.defaults import get_cc_from_iri_
 from roads_cba_py.section import Section
 
 
@@ -49,6 +49,28 @@ class TestCbaModel(unittest.TestCase):
                     print(k, v)
             self.assertEqual({}, diffs)
 
+    def test_performance(self):
+        import cProfile
+
+        files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
+        files = files[0:1]
+        # files = sample(files, 10)
+        idents = [re.match(".*section_(.*).json", f)[1] for f in files]
+
+        def process_ident(ident):
+            input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+            return self.cba_model.compute_cba_for_section(input)
+
+        def foo():
+            start = time.time()
+            actual_outputs = {ident: process_ident(ident) for ident in idents}
+            print(f"Time: {time.time() - start}")
+            return actual_outputs
+
+        # with cProfile.Profile() as pr:
+        foo()
+        # pr.print_stats(SortKey.TIME)
+
     def test_defaults(self):
         ident = "615073_305"
         section = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
@@ -61,8 +83,8 @@ class TestCbaModel(unittest.TestCase):
         self.assertEqual(1, self.cba_model.get_default_lanes(4.24))
         self.assertEqual(2, self.cba_model.get_default_lanes(4.25))
         self.assertEqual(4, self.cba_model.get_default_lanes(10.0))
-        self.assertRaises(ValueError, self.cba_model.get_default_lanes, -1)
-        self.assertRaises(ValueError, self.cba_model.get_default_lanes, 100.0)
+        # self.assertRaises(ValueError, self.cba_model.get_default_lanes, -1)
+        # self.assertRaises(ValueError, self.cba_model.get_default_lanes, 100.0)
 
         section.condition_class = 0
         section.road_type = 3
@@ -70,5 +92,5 @@ class TestCbaModel(unittest.TestCase):
         self.assertEqual(7.0, section.roughness)
         self.assertEqual(3, section.condition_class)
 
-        self.assertEqual(3, get_cc_from_iri_(7, 3))
-        self.assertEqual(4, get_cc_from_iri_(9.5, 3))
+        # kself.assertEqual(3, get_cc_from_iri_(7, 3))
+        # kself.assertEqual(4, get_cc_from_iri_(9.5, 3))

@@ -6,7 +6,7 @@ DANGEROUS: Do not change these values if you're not sure how to change them
 """
 import numpy as np
 import pandas as pd
-
+from intervaltree import IntervalTree
 
 dDiscount_Rate = 0.12
 dEconomic_Factor = 0.91
@@ -48,26 +48,25 @@ dTrafficLevels = np.array(
     dtype=np.float64,
 )
 
-traffic_ranges = pd.DataFrame(
-    columns=[["lower", "upper", "traffic_class"]],
-    data=[
-        [0, 50, 1],
-        [50, 100, 2],
-        [100, 250, 3],
-        [250, 500, 4],
-        [500, 1000, 5],
-        [1000, 3000, 6],
-        [3000, 5000, 7],
-        [5000, 7000, 8],
-        [7000, 9000, 9],
-        [9000, 12000, 10],
-        [12000, 15000, 11],
-        [15000, 20000, 12],
-        [20000, 30000, 13],
-        [30000, 40000, 14],
-        [40000, 100000, 15],
-    ],
-)
+traffic_ranges_data = [
+    (0, 50, 1),
+    (50, 100, 2),
+    (100, 250, 3),
+    (250, 500, 4),
+    (500, 1000, 5),
+    (1000, 3000, 6),
+    (3000, 5000, 7),
+    (5000, 7000, 8),
+    (7000, 9000, 9),
+    (9000, 12000, 10),
+    (12000, 15000, 11),
+    (15000, 20000, 12),
+    (20000, 30000, 13),
+    (30000, 40000, 14),
+    (40000, 100000, 15),
+]
+
+traffic_ranges = pd.DataFrame(data=traffic_ranges_data, columns=["lower", "upper", "traffic_class"])
 
 # 3. Vehicle Fleet
 dVehicleFleet = np.array(
@@ -94,18 +93,16 @@ iSurfaceDefaults = np.array([3, 4], dtype=np.uint8)
 #                           1 lane    2 lane    3 lane    4 lane    5 lane     6 lane     7 lane
 dWidthDefaults = np.array([[3.5, 1], [5.0, 2], [7.0, 2], [9.0, 2], [14.0, 4], [21.0, 6], [28.0, 8]], dtype=np.float64)
 
-default_lanes = pd.DataFrame(
-    data=[
-        (0.00, 4.25, 1),
-        (4.25, 6.00, 2),
-        (6.00, 8.00, 3),
-        (8.00, 11.5, 4),
-        (11.5, 17.50, 5),
-        (17.5, 24.50, 6),
-        (24.5, 100.0, 7),
-    ],
-    columns=["lower_width", "upper_width", "lanes"],
-)
+# columns = ["lower_width", "upper_width", "lanes"],
+default_lanes = [
+    (0.00, 4.25, 1),
+    (4.25, 6.00, 2),
+    (6.00, 8.00, 3),
+    (8.00, 11.5, 4),
+    (11.5, 17.50, 5),
+    (17.5, 24.50, 6),
+    (24.5, 100.0, 7),
+]
 
 # 5. Surface type, condition levels, variables [initialRoughness, pavementAge]
 dConditionData = np.array(
@@ -3268,35 +3265,74 @@ iri_cc_df = pd.DataFrame(data=iri_cc, columns=["SurfaceType", "RoughnessFrom", "
 
 iri_cc_df[["SurfaceType", "ConditionCategory"]] = iri_cc_df[["SurfaceType", "ConditionCategory"]].astype(int)
 
+
+def default_range(data):
+    # from intervaltree import Interval, IntervalTree
+    t = IntervalTree()
+    for (l, u, v) in data:
+        t[l:u] = v
+
+    def lu(v):
+        e = None
+        for e in t[v]:
+            break
+        if e is None:
+            print(v)
+            print(t)
+        return e.data
+
+    return lu
+
+
 # TODO: Remove one of these implementations
 
 
-def get_cc_from_iri(iri_cc_df, iri, surface_type, default=3):
-    df = iri_cc_df[iri_cc_df["SurfaceType"] == surface_type]
-    cc = default
-    for idx, row in df.iterrows():
-        if row.RoughnessFrom <= iri and iri <= row.RoughnessTo:
-            cc = row.ConditionCategory
-            break
-    return int(cc)
+# def get_cc_from_iri(iri_cc_df, iri, surface_type, default=3):
+# df = iri_cc_df[iri_cc_df["SurfaceType"] == surface_type]
+# cc = default
+# for idx, row in df.iterrows():
+# if row.RoughnessFrom <= iri and iri <= row.RoughnessTo:
+# cc = row.ConditionCategory
+# break
+# return int(cc)
 
 
-def get_cc_from_iri_(iri, surface_type):
-    return int(
-        default_from_range_lookup(
-            iri_cc_df.query("SurfaceType == @surface_type"),
-            iri,
-            lower_col="RoughnessFrom",
-            upper_col="RoughnessTo",
-            value_col="ConditionCategory",
-        )
-    )
+# def get_cc_from_iri_(iri, surface_type):
+#     return int(get_cc
+#     return int(
+#         default_from_range_lookup(
+#             iri_cc_df.query("SurfaceType == @surface_type"),
+#             iri,
+#             lower_col="RoughnessFrom",
+#             upper_col="RoughnessTo",
+#             value_col="ConditionCategory",
+#         )
+#     )
 
 
-def default_from_range_lookup(df, v, lower_col="lower", upper_col="upper", value_col="value"):
-    if isinstance(v, str):
-        print(v)
-    rows = df.query(f"@v >= {lower_col} & @v < {upper_col}")
-    if len(rows) != 1:
-        raise ValueError(f"Can't find default value for {v} in ({lower_col},{upper_col})")
-    return rows.iloc[0][value_col]
+# def default_from_range_lookup(df, v, lower_col="lower", upper_col="upper", value_col="value"):
+#     if isinstance(v, str):
+#         print(v)
+#     rows = df.query(f"@v >= {lower_col} & @v < {upper_col}")
+#     if len(rows) != 1:
+#         raise ValueError(f"Can't find default value for {v} in ({lower_col},{upper_col})")
+#     return rows.iloc[0][value_col]
+
+
+traffic_range_lu = default_range(traffic_ranges_data)
+lanes_lu = default_range(default_lanes)
+# return int(default_from_range_lookup(self.default_lanes, width, "lower_width", "upper_width", "lanes"))
+
+
+def get_cc_from_iri_lu():
+    def f(surface_type):
+        data = np.squeeze(iri_cc[np.where(iri_cc[:, 0] == surface_type), 1:])
+        return default_range(data)
+
+    return {i: f(i) for i in range(1, 8)}
+
+
+cc_from_iri_lu = get_cc_from_iri_lu()
+
+
+get_cc_from_iri_lu()
