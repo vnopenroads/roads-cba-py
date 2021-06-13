@@ -120,6 +120,32 @@ class Section(Model):
         }
         return Section(in_data)
 
+    def to_dict(self):
+        return {
+            "orma_way_id": self.orma_way_id,
+            "section_id": self.section_id,
+            "road_number": self.road_number,
+            "road_name": self.road_name,
+            "road_start": self.road_start, 
+            "road_end": self.road_end,
+            "province": self.province,
+            "district": self.district,
+            "commune": self.commune,
+            "management": self.management,
+            "road_length": self.length,
+            "lanes": self.lanes,
+            "width": self.width,
+            "road_class": self.road_class,
+            "terrain": self.terrain,
+            "temperature": self.temperature,
+            "moisture": self.moisture,
+            "surface_type": self.surface_type,
+            "condition_class": self.condition_class,
+            "roughness": self.roughness,
+            "pavement_age": self.pavement_age,
+            "aadt_total": self.aadt_total
+        }
+
     def set_aadts(self, aadts: List[float]):
         (
             self.aadt_motorcyle,
