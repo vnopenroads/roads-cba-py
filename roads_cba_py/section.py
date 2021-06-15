@@ -126,7 +126,7 @@ class Section(Model):
             "section_id": self.section_id,
             "road_number": self.road_number,
             "road_name": self.road_name,
-            "road_start": self.road_start, 
+            "road_start": self.road_start,
             "road_end": self.road_end,
             "province": self.province,
             "district": self.district,
@@ -143,7 +143,7 @@ class Section(Model):
             "condition_class": self.condition_class,
             "roughness": self.roughness,
             "pavement_age": self.pavement_age,
-            "aadt_total": self.aadt_total
+            "aadt_total": self.aadt_total,
         }
 
     def set_aadts(self, aadts: List[float]):
