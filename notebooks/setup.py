@@ -28,3 +28,7 @@ if src_dir not in sys.path:
 project_dir = abspath(join(src_dir, ".."))
 if project_dir not in sys.path:
     sys.path.append(project_dir)
+
+curr_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)))
+if curr_dir not in sys.path:
+    sys.path.append(curr_dir)
