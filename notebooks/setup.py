@@ -1,5 +1,5 @@
 import os
-from os.path import join, abspath
+from os.path import join, abspath, isfile, dirname
 import sys
 import glob
 import re
@@ -11,6 +11,7 @@ from pandas import json_normalize
 import psycopg2
 import shapely.wkt
 import shapely.wkb
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -21,14 +22,17 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
 
-src_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "roads_cba_py")
-if src_dir not in sys.path:
-    sys.path.append(src_dir)
+def find_pipfile(curr_dir):
+    if isfile(join(curr_dir, "Pipfile")):
+        return curr_dir
+    parent_dir = str(Path(curr_dir).parent)
+    return find_pipfile(parent_dir)
 
-project_dir = abspath(join(src_dir, ".."))
+
+project_dir = find_pipfile(os.path.dirname(__file__))
 if project_dir not in sys.path:
     sys.path.append(project_dir)
 
-curr_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)))
-if curr_dir not in sys.path:
-    sys.path.append(curr_dir)
+notebook_dir = join(project_dir, "notebooks")
+if notebook_dir not in sys.path:
+    sys.path.append(notebook_dir)

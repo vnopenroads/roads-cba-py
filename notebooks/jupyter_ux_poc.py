@@ -37,6 +37,26 @@ def generate_outputs(df: pd.DataFrame, drop_detail_cols: bool, keep_cols=[]):
     return map_data
 
 
+def app(map_gdf):
+    header = Output()
+    with header:
+        display(HTML("<h1>ORMA CBA Analysis Proof of Concept</h1>"))
+        display(HTML("<style>h1 { text-align: center; font-size: 30pt }</style>"))
+
+    m, legend = generate_map(map_gdf)
+    attr = m.children[1]
+    map_ui = m.children[0]
+    attr.layout.width = "8%"
+    tab_ui = add_tabs(map_gdf)
+    map_ui.add_control(legend)
+
+    app = VBox()
+    main_ui = HBox()
+    main_ui.children = [attr, map_ui, tab_ui]
+    app.children = [header, main_ui]
+    return app
+
+
 # def update_sa3_box(feature,  **kwargs):
 #     sa3_ = feature['properties']['SA3_NAME16']
 #     trips_for_sa3 = survey_by_sa3_and_mode.loc[survey_by_sa3_and_mode.SA3_NAME16 == sa3_]
