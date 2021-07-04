@@ -35,7 +35,7 @@ class TestCbaModel(unittest.TestCase):
 
         start = time.time()
         actual_outputs = {ident: process_ident(ident) for ident in idents}
-        print(f"Time: {time.time() - start}")
+        # print(f"Time: {time.time() - start}")
 
         for ident, actual_output in actual_outputs.items():
             expected_output = CbaResult.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
@@ -64,7 +64,7 @@ class TestCbaModel(unittest.TestCase):
         def foo():
             start = time.time()
             actual_outputs = {ident: process_ident(ident) for ident in idents}
-            print(f"Time: {time.time() - start}")
+            # print(f"Time: {time.time() - start}")
             return actual_outputs
 
         # with cProfile.Profile() as pr:

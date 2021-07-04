@@ -1,0 +1,6 @@
+# Only used for Notebooks
+jupyterlab
+ipython
+geopandas
+psycopg2
+matplotlib

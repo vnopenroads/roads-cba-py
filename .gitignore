@@ -7,3 +7,4 @@ data/tmp/*
 database_credentials.py
 *.pem
 temp.json
+Pipfile.lock
