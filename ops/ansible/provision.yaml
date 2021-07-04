@@ -53,36 +53,11 @@
       tags: bootstrap
 
 
-      # - name: Creates data root directory
-      #   file:
-      #     path: /mnt/kahuna_data
-      #     state: directory
-      #   become: True
-
-      # - name: Set permissions on hakuna_data mount
-      #   file:
-      #     path: /mnt/kahuna_data
-      #     owner: hakuna
-      #     group: hakuna
-      #     mode: u=rwx,g=rwx,o=rx,g+s
-      #     state: directory
-      #   become: yes
-
-      # - name: Apt dependencies
-      #   apt:
-      #      update_cache: yes
-      #      name: pbzip2,htop,tmux,unzip,ntp,ack-grep,silversearcher-ag,python3,python3-pip,build-essential,libssl-dev,python3-dev,git
-      #   become: True
-
-      # - name: Install PIP dependencies
-      #   pip:
-      #      name: jupyter,jupyterlab,numpy,geopandas,schematics,ipyleaflet,psycopg2-binary,matplotlib,seaborn,numpy_financial,intervaltree
-
-       - name: Copy files
-         ansible.posix.synchronize:
-           src: "{{ src_dir }}/{{ item }}"
-           dest: "/home/ubuntu/cba_poc/"
-         with_items:
-           - notebooks
-           - roads_cba_py
-           - data
+    - name: Copy files
+      ansible.posix.synchronize:
+        src: "{{ src_dir }}/{{ item }}"
+        dest: "/home/ubuntu/cba_poc/"
+      with_items:
+        - notebooks
+        - roads_cba_py
+        - data

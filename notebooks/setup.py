@@ -8,7 +8,6 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 from pandas import json_normalize
-# import psycopg2
 import shapely.wkt
 import shapely.wkb
 from pathlib import Path

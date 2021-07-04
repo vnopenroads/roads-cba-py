@@ -22,12 +22,7 @@ from roads_cba_py.defaults import traffic_ranges, traffic_ranges_data, default_r
 class TestCbaModel(unittest.TestCase):
     def test_perf(self):
 
-        vs = (
-            np.random.rand(
-                1000,
-            )
-            * 15000
-        )
+        vs = np.random.rand(1000) * 15000
 
         lu = default_range(traffic_ranges_data)
 
