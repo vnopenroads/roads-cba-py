@@ -8,7 +8,7 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 from pandas import json_normalize
-import psycopg2
+# import psycopg2
 import shapely.wkt
 import shapely.wkb
 from pathlib import Path
@@ -36,3 +36,8 @@ if project_dir not in sys.path:
 notebook_dir = join(project_dir, "notebooks")
 if notebook_dir not in sys.path:
     sys.path.append(notebook_dir)
+
+
+from os.path import expanduser
+home = expanduser("~")
+sys.environ["TEMP_DIR"] = join(home, 'tmp')

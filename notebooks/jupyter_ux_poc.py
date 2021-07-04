@@ -415,8 +415,9 @@ def color_by_iri(feature):
 
 
 def add_roads(m, df, attr):
-    df.to_file("temp.json", driver="GeoJSON", encoding="utf-8")
-    geojson_data = json.load(open("temp.json", "r"))
+    temp_json = os.path.join(os.environ['TEMP_DIR'], 'temp.json')
+    df.to_file(temp_json, driver="GeoJSON", encoding="utf-8")
+    geojson_data = json.load(open(temp_json, "r"))
 
     map_geo = GeoJSON(
         data=geojson_data,
