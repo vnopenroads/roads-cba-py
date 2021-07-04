@@ -3284,45 +3284,8 @@ def default_range(data):
     return lu
 
 
-# TODO: Remove one of these implementations
-
-
-# def get_cc_from_iri(iri_cc_df, iri, surface_type, default=3):
-# df = iri_cc_df[iri_cc_df["SurfaceType"] == surface_type]
-# cc = default
-# for idx, row in df.iterrows():
-# if row.RoughnessFrom <= iri and iri <= row.RoughnessTo:
-# cc = row.ConditionCategory
-# break
-# return int(cc)
-
-
-# def get_cc_from_iri_(iri, surface_type):
-#     return int(get_cc
-#     return int(
-#         default_from_range_lookup(
-#             iri_cc_df.query("SurfaceType == @surface_type"),
-#             iri,
-#             lower_col="RoughnessFrom",
-#             upper_col="RoughnessTo",
-#             value_col="ConditionCategory",
-#         )
-#     )
-
-
-# def default_from_range_lookup(df, v, lower_col="lower", upper_col="upper", value_col="value"):
-#     if isinstance(v, str):
-#         print(v)
-#     rows = df.query(f"@v >= {lower_col} & @v < {upper_col}")
-#     if len(rows) != 1:
-#         raise ValueError(f"Can't find default value for {v} in ({lower_col},{upper_col})")
-#     return rows.iloc[0][value_col]
-
-
 traffic_range_lu = default_range(traffic_ranges_data)
 lanes_lu = default_range(default_lanes)
-# return int(default_from_range_lookup(self.default_lanes, width, "lower_width", "upper_width", "lanes"))
-
 
 def get_cc_from_iri_lu():
     def f(surface_type):
@@ -3333,6 +3296,3 @@ def get_cc_from_iri_lu():
 
 
 cc_from_iri_lu = get_cc_from_iri_lu()
-
-
-get_cc_from_iri_lu()
