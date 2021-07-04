@@ -38,5 +38,6 @@ if notebook_dir not in sys.path:
 
 
 from os.path import expanduser
+
 home = expanduser("~")
-sys.environ["TEMP_DIR"] = join(home, 'tmp')
+sys.environ["TEMP_DIR"] = join(home, "tmp")
