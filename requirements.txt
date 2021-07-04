@@ -1,6 +1,5 @@
-numpy = "*"
-tqdm = "*"
-pandas = "*"
-schematics = "*"
-jupyterlab = "*"
-intervaltree = "*"
+numpy
+tqdm
+pandas
+schematics
+intervaltree

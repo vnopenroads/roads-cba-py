@@ -1,5 +1,6 @@
 # Only used for Notebooks
-ipython = "*"
-geopandas = "*"
-psycopg2 = "*"
-matplotlib = "*"
+jupyterlab
+ipython
+geopandas
+psycopg2
+matplotlib
