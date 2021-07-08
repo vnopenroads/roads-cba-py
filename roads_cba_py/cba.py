@@ -218,20 +218,19 @@ class CostBenefitAnalysisModel:
                         dCondSNC[ia, iy] = dYearSNC = repair_alt.snc
 
                     dCostRepairFin[ia, iy] = (
-                            repair_alt.get_unit_cost(iTerrain) * dCondLength[ia, iy] * dCondWidth[ia, iy] / 1000.0
+                        repair_alt.get_unit_cost(iTerrain) * dCondLength[ia, iy] * dCondWidth[ia, iy] / 1000.0
                     )
                     dCostRepairEco[ia, iy] = dCostRepairFin[ia, iy] * self.dEconomic_Factor
 
                 # recurrent road work without recurrent maintenance condition multipliers
                 dCostRecurrentFin[ia, iy] = (
-                        self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1] * dCondLength[
-                    ia, iy] / 1000000.0
+                    self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1] * dCondLength[ia, iy] / 1000000.0
                 )
                 dCostRecurrentEco[ia, iy] = (
-                        self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1]
-                        * dCondLength[ia, iy]
-                        * self.dEconomic_Factor
-                        / 1000000.0
+                    self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1]
+                    * dCondLength[ia, iy]
+                    * self.dEconomic_Factor
+                    / 1000000.0
                 )
 
                 # Roughness
@@ -265,33 +264,33 @@ class CostBenefitAnalysisModel:
                 iri2, iri3 = np.power(dYearRoughness, 2), np.power(dYearRoughness, 3)
 
                 voc = (
-                              self.dVOC[lane_cond_idx, terrain_idx, 0, :]
-                              + (self.dVOC[lane_cond_idx, terrain_idx, 1, :] * dYearRoughness)
-                              + (self.dVOC[lane_cond_idx, terrain_idx, 2, :] * iri2)
-                              + (self.dVOC[lane_cond_idx, terrain_idx, 3, :] * iri3)
-                      ) * dAADT[0:12, iy]
+                    self.dVOC[lane_cond_idx, terrain_idx, 0, :]
+                    + (self.dVOC[lane_cond_idx, terrain_idx, 1, :] * dYearRoughness)
+                    + (self.dVOC[lane_cond_idx, terrain_idx, 2, :] * iri2)
+                    + (self.dVOC[lane_cond_idx, terrain_idx, 3, :] * iri3)
+                ) * dAADT[0:12, iy]
                 dCostVOC[ia, iy] = voc.sum() * dCondLength[ia, iy] * 365 / 1000000
 
                 # Speed
                 speed = (
-                        self.dSPEED[lane_cond_idx, terrain_idx, 0, :]
-                        + (self.dSPEED[lane_cond_idx, terrain_idx, 1, :] * dYearRoughness)
-                        + (self.dSPEED[lane_cond_idx, terrain_idx, 2, :] * iri2)
-                        + (self.dSPEED[lane_cond_idx, terrain_idx, 3, :] * iri3)
+                    self.dSPEED[lane_cond_idx, terrain_idx, 0, :]
+                    + (self.dSPEED[lane_cond_idx, terrain_idx, 1, :] * dYearRoughness)
+                    + (self.dSPEED[lane_cond_idx, terrain_idx, 2, :] * iri2)
+                    + (self.dSPEED[lane_cond_idx, terrain_idx, 3, :] * iri3)
                 )
 
                 dCondSpeed[ia, iy, :] = speed
                 dCondSpeedAve[ia, iy] = speed.sum() / 12
 
                 dCostTime[ia, iy] = (
-                        1
-                        / speed
-                        * dCondLength[ia, iy]
-                        * self.dVehicleFleet[:, 1]
-                        * self.dVehicleFleet[:, 2]
-                        * dAADT[:-1, iy]
-                        * 365
-                        / 1000000
+                    1
+                    / speed
+                    * dCondLength[ia, iy]
+                    * self.dVehicleFleet[:, 1]
+                    * self.dVehicleFleet[:, 2]
+                    * dAADT[:-1, iy]
+                    * 365
+                    / 1000000
                 ).sum()
 
                 # Pavement Condition Class function of rougness
@@ -393,7 +392,7 @@ class CostBenefitAnalysisModel:
         return self.dWorkEvaluated[(iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + baz, 4]
 
     def calculate_next_year_roughness(
-            self, dYearRoughness, iYearAge, ia, iy, iTemperature, iMoisture, dCondSNC, dESATotal, iCondSurface
+        self, dYearRoughness, iYearAge, ia, iy, iTemperature, iMoisture, dCondSNC, dESATotal, iCondSurface
     ):
         """
         Rougnesss progression function of surface type
@@ -420,18 +419,18 @@ class CostBenefitAnalysisModel:
             snc = dCondSNC[ia, iy]
             ye4 = dESATotal[iy]
             return dYearRoughness + (
-                    Kgp
-                    * (a0 * np.exp(Kgm * moisture_coeff * iYearAge) * np.power((1 + snc * a1),
-                                                                               -5) * ye4 + a2 * iYearAge)
-                    + (Kgm * moisture_coeff * dYearRoughness)
+                Kgp
+                * (a0 * np.exp(Kgm * moisture_coeff * iYearAge) * np.power((1 + snc * a1), -5) * ye4 + a2 * iYearAge)
+                + (Kgm * moisture_coeff * dYearRoughness)
             )
 
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
 
-        growth_factor = 1.0 + self.dGrowth[iGrowthScenario - 1, :]
+        idx = iGrowthScenario - 1
+        growth_factor = 1.0 + self.dGrowth[idx : idx + 1, :]
 
         # Use numpy cumumlative sum to calculate the growth into the next 20 years
-        dAADT[0:12, 1:20] = np.reshape(growth_factor, (12, 1))
+        dAADT[0:12, 1:20] = growth_factor.T
         np.cumprod(dAADT[0:12, :], axis=1, out=dAADT[0:12, :])
 
         # Calculate the total AADT over all the vehicle classes
@@ -441,14 +440,15 @@ class CostBenefitAnalysisModel:
         return dAADT
 
     def compute_esa_loading(self, dAADT, iLanes):
-        scalar = 365 / 1000000 / self.dWidthDefaults[iLanes - 1, 1]
-        return np.sum(dAADT[0:12, :] * np.reshape(self.dVehicleFleet[0:12, 0], (12, 1)), axis=0) * scalar
+        annualisation_factor = 365 / 1000000 / self.dWidthDefaults[iLanes - 1, 1]
+        # calculate the sumproduct of traffic volumes with their equivalent standard axle weightings
+        return np.sum(dAADT[0:12, :] * self.dVehicleFleet[0:12, 0:1], axis=0) * annualisation_factor
 
     def compute_trucks_percent(self, dAADT):
         return np.sum(dAADT[5:9, 0]) / dAADT[12, 0]
 
     def compute_vehicle_utilization(self, dAADT, dLength):
-        return np.sum(dAADT[0:12, 0]) * dLength * 365 / 1000000
+        return dAADT[12, 0] * dLength * 365 / 1000000
 
     def fill_defaults(self, section: Section) -> Section:
         if section.road_type == 0 and section.surface_type == 0:
