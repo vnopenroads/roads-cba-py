@@ -54,6 +54,7 @@ class TestCbaModel(unittest.TestCase):
 
         files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
         files = files[0:1]
+        print(files)
         # files = sample(files, 10)
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
 

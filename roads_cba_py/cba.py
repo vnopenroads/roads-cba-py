@@ -352,9 +352,9 @@ class CostBenefitAnalysisModel:
         }
         return CbaResult(results)
 
-    # JC: I'm not sure what this does, but it's used in a number of places to get the left index
-    #     into the dWorkEvaluated member variable
-    def get_left_index(self, iSurfaceType, iRoadClass, iConditionClass):
+    # This converts the surface type, road class condition class into an index offset into the dWorkEvaluated array
+    # There are 5 unique condition classes, 10 road classes which defines the math below
+    def get_work_evalauted_index(self, iSurfaceType, iRoadClass, iConditionClass):
         return (iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1
 
     def compute_alternatives(self, iSurfaceType, iRoadClass, iConditionClass):
@@ -362,13 +362,15 @@ class CostBenefitAnalysisModel:
         dAlternatives = np.zeros((13, 2), dtype=np.float64)
 
         # Get initial road work for the 13 alternatives
-        left_index = self.get_left_index(iSurfaceType, iRoadClass, iConditionClass)
-        dAlternatives[0, 0] = int(self.dWorkEvaluated[left_index, 1])
-        dAlternatives[1:7, 0] = int(self.dWorkEvaluated[left_index, 2])
-        dAlternatives[7:13, 0] = int(self.dWorkEvaluated[left_index, 3])
+        work_index = self.get_work_evalauted_index(iSurfaceType, iRoadClass, iConditionClass)
+        work_year, road_work_number, alt_1, alt_2, _unit_cost_mult = self.dWorkEvaluated[work_index]
+
+        dAlternatives[0, 0] = road_work_number
+        dAlternatives[1:7, 0] = alt_1
+        dAlternatives[7:13, 0] = alt_2
 
         # Define years of initial works for 13 alternatives
-        dAlternatives[0, 1] = int(self.dWorkEvaluated[left_index, 0])
+        dAlternatives[0, 1] = work_year
 
         if dAlternatives[1, 0] > 0:  # first road work defined: evaluate at least 7 alternatives
             dAlternatives[1:7, 1] = [1, 2, 3, 4, 5, 6]
@@ -379,8 +381,8 @@ class CostBenefitAnalysisModel:
             iNoAlernatives = 13
 
         if dAlternatives[1, 0] == 0 and dAlternatives[7, 0] == 0:  # no road works defined: evaluate 2 base alternatives
-            dAlternatives[1, 0] = self.dWorkEvaluated[left_index, 1]
-            dAlternatives[1, 1] = self.dWorkEvaluated[left_index, 0]
+            dAlternatives[1, 0] = road_work_number
+            dAlternatives[1, 1] = work_year
             iNoAlernatives = 2
 
         return iNoAlernatives, dAlternatives
@@ -423,41 +425,30 @@ class CostBenefitAnalysisModel:
             )
 
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
-        for iv in range(12):
-            for iy in range(1, 20):
-                dAADT[iv, iy] = dAADT[iv, iy - 1] * (1 + self.dGrowth[iGrowthScenario - 1, iv])
 
-        for iy in range(1, 20):
-            dAADT[12, iy] = 0
-            for iv in range(12):
-                dAADT[12, iy] = dAADT[12, iy] + dAADT[iv, iy]
+        idx = iGrowthScenario - 1
+        growth_factor = 1.0 + self.dGrowth[idx : idx + 1, :]
+
+        # Use numpy cumumlative sum to calculate the growth into the next 20 years
+        dAADT[0:12, 1:20] = growth_factor.T
+        np.cumprod(dAADT[0:12, :], axis=1, out=dAADT[0:12, :])
+
+        # Calculate the total AADT over all the vehicle classes
+        dAADT[12, :].fill(0)
+        dAADT[12, :] = dAADT.sum(axis=0)
 
         return dAADT
 
     def compute_esa_loading(self, dAADT, iLanes):
-        dESATotal = np.zeros((20,), dtype=np.float64)
-
-        for iy in range(0, 20):
-            dESATotal[iy] = 0
-            for iv in range(0, 12):
-                dESATotal[iy] = (
-                    dESATotal[iy]
-                    + dAADT[iv, iy] * self.dVehicleFleet[iv, 0] / 1000000 * 365 / self.dWidthDefaults[iLanes - 1, 1]
-                )
-
-        # a = [0.003078775,0.00324502885,0.0034202604079,0.0036049544699266,0.00379962201130264,0.00400480159991298,0.00422106088630828,0.00444899817416893,0.00468924407557405,0.00494246325565505,0.00520935627146042,0.00549066151011928,0.00578715723166573,0.00609966372217567,0.00642904556317316,0.00677621402358451,0.00714212958085807,0.00752780457822441,0.00793430602544853,0.00836275855082275]
-        # b = 0.00307877,0.00324503,0.00342026,0.00360495,0.00379962,0.00400480, 0.00422106,0.004449,  0.00468924,0.00494246,0.00520936,0.00549066, 0.00578716,0.00609966,0.00642905,0.00677621,0.00714213,0.0075278, 0.00793431,0.00836276]
-        # print(",".join(map(str, dESATotal)))
-        return dESATotal
+        annualisation_factor = 365 / 1000000 / self.dWidthDefaults[iLanes - 1, 1]
+        # calculate the sumproduct of traffic volumes with their equivalent standard axle weightings
+        return np.sum(dAADT[0:12, :] * self.dVehicleFleet[0:12, 0:1], axis=0) * annualisation_factor
 
     def compute_trucks_percent(self, dAADT):
-        return (dAADT[5, 0] + dAADT[6, 0] + dAADT[7, 0] + dAADT[8, 0]) / dAADT[12, 0]
+        return np.sum(dAADT[5:9, 0]) / dAADT[12, 0]
 
     def compute_vehicle_utilization(self, dAADT, dLength):
-        dUtilization = 0
-        for iv in range(0, 12):
-            dUtilization = dUtilization + dAADT[iv, 0] * dLength * 365 / 1000000
-        return dUtilization
+        return dAADT[12, 0] * dLength * 365 / 1000000
 
     def fill_defaults(self, section: Section) -> Section:
         if section.road_type == 0 and section.surface_type == 0:
