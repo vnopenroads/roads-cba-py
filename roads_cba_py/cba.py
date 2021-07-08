@@ -352,9 +352,9 @@ class CostBenefitAnalysisModel:
         }
         return CbaResult(results)
 
-    # JC: I'm not sure what this does, but it's used in a number of places to get the left index
-    #     into the dWorkEvaluated member variable
-    def get_left_index(self, iSurfaceType, iRoadClass, iConditionClass):
+    # This converts the surface type, road class condition class into an index offset into the dWorkEvaluated array
+    # There are 5 unique condition classes, 10 road classes which defines the math below
+    def get_work_evalauted_index(self, iSurfaceType, iRoadClass, iConditionClass):
         return (iSurfaceType - 1) * 50 + (iRoadClass - 1) * 5 + iConditionClass - 1
 
     def compute_alternatives(self, iSurfaceType, iRoadClass, iConditionClass):
@@ -362,13 +362,15 @@ class CostBenefitAnalysisModel:
         dAlternatives = np.zeros((13, 2), dtype=np.float64)
 
         # Get initial road work for the 13 alternatives
-        left_index = self.get_left_index(iSurfaceType, iRoadClass, iConditionClass)
-        dAlternatives[0, 0] = int(self.dWorkEvaluated[left_index, 1])
-        dAlternatives[1:7, 0] = int(self.dWorkEvaluated[left_index, 2])
-        dAlternatives[7:13, 0] = int(self.dWorkEvaluated[left_index, 3])
+        work_index = self.get_work_evalauted_index(iSurfaceType, iRoadClass, iConditionClass)
+        work_year, road_work_number, alt_1, alt_2, _unit_cost_mult = self.dWorkEvaluated[work_index]
+
+        dAlternatives[0, 0] = road_work_number
+        dAlternatives[1:7, 0] = alt_1
+        dAlternatives[7:13, 0] = alt_2
 
         # Define years of initial works for 13 alternatives
-        dAlternatives[0, 1] = int(self.dWorkEvaluated[left_index, 0])
+        dAlternatives[0, 1] = work_year
 
         if dAlternatives[1, 0] > 0:  # first road work defined: evaluate at least 7 alternatives
             dAlternatives[1:7, 1] = [1, 2, 3, 4, 5, 6]
@@ -379,8 +381,8 @@ class CostBenefitAnalysisModel:
             iNoAlernatives = 13
 
         if dAlternatives[1, 0] == 0 and dAlternatives[7, 0] == 0:  # no road works defined: evaluate 2 base alternatives
-            dAlternatives[1, 0] = self.dWorkEvaluated[left_index, 1]
-            dAlternatives[1, 1] = self.dWorkEvaluated[left_index, 0]
+            dAlternatives[1, 0] = road_work_number
+            dAlternatives[1, 1] = work_year
             iNoAlernatives = 2
 
         return iNoAlernatives, dAlternatives
@@ -423,14 +425,13 @@ class CostBenefitAnalysisModel:
             )
 
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
-        for iv in range(12):
-            for iy in range(1, 20):
-                dAADT[iv, iy] = dAADT[iv, iy - 1] * (1 + self.dGrowth[iGrowthScenario - 1, iv])
 
-        for iy in range(1, 20):
-            dAADT[12, iy] = 0
-            for iv in range(12):
-                dAADT[12, iy] = dAADT[12, iy] + dAADT[iv, iy]
+        growth_factor = 1.0 + self.dGrowth[iGrowthScenario - 1, :]
+        dAADT[0:12, 1:20] = np.reshape(growth_factor, (12, 1))
+        np.cumprod(dAADT[0:12, :], axis=1, out=dAADT[0:12, :])
+
+        dAADT[12, :].fill(0)
+        dAADT[12, :] = dAADT.sum(axis=0)
 
         return dAADT
 

@@ -3287,6 +3287,7 @@ def default_range(data):
 traffic_range_lu = default_range(traffic_ranges_data)
 lanes_lu = default_range(default_lanes)
 
+
 def get_cc_from_iri_lu():
     def f(surface_type):
         data = np.squeeze(iri_cc[np.where(iri_cc[:, 0] == surface_type), 1:])
