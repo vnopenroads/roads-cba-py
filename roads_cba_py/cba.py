@@ -427,9 +427,12 @@ class CostBenefitAnalysisModel:
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
 
         growth_factor = 1.0 + self.dGrowth[iGrowthScenario - 1, :]
+
+        # Use numpy cumumlative sum to calculate the growth into the next 20 years
         dAADT[0:12, 1:20] = np.reshape(growth_factor, (12, 1))
         np.cumprod(dAADT[0:12, :], axis=1, out=dAADT[0:12, :])
 
+        # Calculate the total AADT over all the vehicle classes
         dAADT[12, :].fill(0)
         dAADT[12, :] = dAADT.sum(axis=0)
 
