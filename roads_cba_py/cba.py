@@ -32,6 +32,9 @@ from roads_cba_py.section import Section
 from roads_cba_py.utils import print_diff
 
 
+def test_api(x):
+    return x + 7
+
 class CostBenefitAnalysisModel:
     def __init__(self):
         self.dDiscount_Rate = dDiscount_Rate
