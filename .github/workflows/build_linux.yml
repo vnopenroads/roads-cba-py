@@ -29,7 +29,7 @@ jobs:
     - name: Moves wheels
       run: |
         mkdir -p dist
-        cp -v ./*-manylinux*.whl dist/
+        cp -v ./*.whl dist/
 
     - name: Keep wheels on GitHub
 #      if: ${{ github.event_name == 'push'}}
