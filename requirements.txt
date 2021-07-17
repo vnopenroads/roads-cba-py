@@ -1,6 +1,5 @@
 numpy
 numpy_financial
-tqdm
 pandas
 schematics
 intervaltree
