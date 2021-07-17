@@ -26,11 +26,6 @@ jobs:
     - name: Build
       run: python setup.py sdist bdist_wheel
 
-    - name: Moves wheels
-      run: |
-        mkdir -p dist
-        cp -v ./*.whl dist/
-
     - name: Keep wheels on GitHub
 #      if: ${{ github.event_name == 'push'}}
       uses: actions/upload-artifact@v2
