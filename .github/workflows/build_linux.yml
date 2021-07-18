@@ -1,0 +1,50 @@
+name: Build and upload Linux Python Package
+
+on:  [pull_request, release]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.6', '3.7', '3.8' , '3.9' ]
+        architecture: [ 'x64' ]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set Python environment
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install packages
+      run: |
+        python -m pip install setuptools --upgrade
+        python -m pip install pytest wheel
+        python -m pip install -r requirements.txt
+        python -m pip install --upgrade cffi twine
+
+    - name: Build
+      run: python setup.py sdist bdist_wheel
+
+    - name: Keep wheels on GitHub
+      if: ${{matrix.python-version == '3.8'}}
+      uses: actions/upload-artifact@v2
+      with:
+        name: library
+        path: dist/*.whl
+        if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
+
+    - name: Publish wheels to PyPI
+      if: ${{ github.event_name == 'release' && matrix.python-version == '3.8' }}
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*.whl
+
+    - name: Publish tar files
+      if: ${{ github.event_name == 'release' && matrix.python-version == '3.8' }}
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: twine upload dist/*.gz
