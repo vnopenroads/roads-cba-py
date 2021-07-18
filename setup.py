@@ -8,7 +8,7 @@ with open("requirements.txt", "r") as f:
 
 setuptools.setup(
     name="roads-cba-py",
-    version="0.0.1",
+    version="0.0.2",
     author="Jamie Cook",
     author_email="jimi.cook@gmail.com",
     description="A pure python implementation of a CBA analysis for road maintenance prioritisation",
