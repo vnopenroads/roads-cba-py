@@ -27,7 +27,6 @@ jobs:
       run: python setup.py sdist bdist_wheel
 
     - name: Keep wheels on GitHub
-#      if: ${{ github.event_name == 'push'}}
       if: ${{matrix.python-version == '3.8'}}
       uses: actions/upload-artifact@v2
       with:
@@ -36,21 +35,16 @@ jobs:
         if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
 
     - name: Publish wheels to PyPI
-      if: ${{matrix.python-version == '3.8'}}
+      if: ${{ github.event_name == 'release' && matrix.python-version == '3.8' }}
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         twine upload dist/*.whl
-#
-#    - name: Save wheels to AWS
-#      uses: jakejarvis/s3-sync-action@master
-#      with:
-#        args: --acl public-read --follow-symlinks
-#      env:
-#        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-#        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#        AWS_REGION: 'us-east-1'   # optional: defaults to us-east-1
-#        SOURCE_DIR: 'dist/'      # optional: defaults to entire repository
-#        DEST_DIR: 'wheels/'      # optional: defaults to entire repository
+
+    - name: Publish tar files
+      if: ${{ github.event_name == 'release' && matrix.python-version == '3.8' }}
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: twine upload dist/*.gz
