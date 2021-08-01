@@ -32,9 +32,6 @@ from roads_cba_py.section import Section
 from roads_cba_py.utils import print_diff
 
 
-def test_api(x):
-    return x + 7
-
 class CostBenefitAnalysisModel:
     def __init__(self):
         self.dDiscount_Rate = dDiscount_Rate
@@ -351,7 +348,7 @@ class CostBenefitAnalysisModel:
             "con_base": dCondCON[0].tolist(),
             "financial_recurrent_cost": dCostRecurrentFin[iTheSelected].tolist(),
             "net_benefits": dNetTotal[iTheSelected].tolist(),
-            "orma_way_id": section.orma_way_id,
+            "orma_way_id": section.id,
         }
         return CbaResult(results)
 
@@ -468,7 +465,7 @@ class CostBenefitAnalysisModel:
         if section.width == 0 and section.lanes == 0:
             raise ValueError("Must define either road width or number of lanes")
         if section.width == 0:
-            section.width = dWidthDefaults(section.lanes, 1)
+            section.width = dWidthDefaults[section.lanes-1, 1]
         if section.lanes == 0:
             section.lanes = self.get_default_lanes(section.width)
 
@@ -478,17 +475,19 @@ class CostBenefitAnalysisModel:
         if section.condition_class == 0:
             section.condition_class = int(cc_from_iri_lu[section.surface_type](section.roughness))
         roughness, pavement_age = dConditionData[section.surface_type - 1, section.condition_class - 1]
+
         if section.roughness == 0:
             section.roughness = roughness
         if section.pavement_age == 0:
             section.pavement_age = pavement_age
-        if section.structural_no == 0:
-            if section.surface_type < 4:
-                section.structural_no = dTrafficLevels(section.traffic_level, 13 + section.condition_class)
 
         # Traffic Level and Traffic Data
         if section.traffic_level == 0 and section.aadt_total == 0:
             raise ValueError("Must define either traffic level class or traffic data")
+
+        msg = f"{section.traffic_level}, {section.aadt_total} {section.id}"
+        if section.traffic_level is None:
+            raise ValueError(msg)
 
         if section.aadt_total == 0:
             # print(section.get_aadts())
@@ -505,6 +504,17 @@ class CostBenefitAnalysisModel:
 
         if section.traffic_level == 0:
             section.traffic_level = traffic_range_lu(section.aadt_total)
+        if section.traffic_growth == 0:
+            section.traffic_growth = 1
+        
+        if section.structural_no == 0:
+            if section.surface_type < 4:
+                msg = f"{section.id} {section.surface_type}, {section.traffic_level}, {section.condition_class}"
+                if section.traffic_level and section.traffic_level > 14:
+                    raise ValueError(msg)
+                section.structural_no = dTrafficLevels[section.traffic_level, 12 + section.condition_class]
+
+
 
         return section
 

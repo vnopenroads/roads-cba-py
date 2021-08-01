@@ -15,14 +15,13 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/vnopenroads/roads-cba-py",
-    project_urls={
-    },
+    project_urls={},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=['roads_cba_py'],
+    packages=["roads_cba_py"],
     python_requires=">=3.6",
-    install_requires = requirements
+    install_requires=requirements,
 )

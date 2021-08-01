@@ -15,7 +15,7 @@ class TestSection(unittest.TestCase):
     def test_simple(self):
         s = Section({"section_id": "7"})
         s = TestSection.load_from_file("section_635950_304.json")
-        self.assertEqual("635950_304", s.orma_way_id)
+        self.assertEqual("635950_304", s.id)
 
     @classmethod
     def load_from_file(cls, filename):
