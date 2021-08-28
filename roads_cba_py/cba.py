@@ -465,7 +465,7 @@ class CostBenefitAnalysisModel:
         if section.width == 0 and section.lanes == 0:
             raise ValueError("Must define either road width or number of lanes")
         if section.width == 0:
-            section.width = dWidthDefaults[section.lanes-1, 1]
+            section.width = dWidthDefaults[section.lanes - 1, 1]
         if section.lanes == 0:
             section.lanes = self.get_default_lanes(section.width)
 
@@ -506,15 +506,13 @@ class CostBenefitAnalysisModel:
             section.traffic_level = traffic_range_lu(section.aadt_total)
         if section.traffic_growth == 0:
             section.traffic_growth = 1
-        
+
         if section.structural_no == 0:
             if section.surface_type < 4:
                 msg = f"{section.id} {section.surface_type}, {section.traffic_level}, {section.condition_class}"
                 if section.traffic_level and section.traffic_level > 14:
                     raise ValueError(msg)
                 section.structural_no = dTrafficLevels[section.traffic_level, 12 + section.condition_class]
-
-
 
         return section
 

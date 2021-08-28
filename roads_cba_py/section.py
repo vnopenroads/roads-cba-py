@@ -4,6 +4,15 @@ from typing import List, Optional
 from schematics.models import Model
 from schematics.types import IntType, StringType, FloatType
 
+class InvalidSection(object):
+    def __init__(self, error, original_data):
+        print(error)
+        self.error = error
+        self.original_data = original_data
+
+    def invalid_reason(self):
+        return self.error
+
 
 class Section(Model):
     id = StringType(max_length=20, min_length=1)
@@ -119,7 +128,10 @@ class Section(Model):
             "aadt_largebus": Section.maybe_int(row["section_large_bus"]),
             "aadt_total": Section.maybe_int(row["aadt"]),
         }
-        return Section(in_data)
+        try:
+            return Section(in_data)
+        except Exception as err:
+            return InvalidSection(err, in_data)
 
     def to_dict(self):
         return {
@@ -180,7 +192,6 @@ class Section(Model):
         )
 
     REQUIRED_FIELDS = ["lanes", "width"]
-    
 
     def invalid_reason(self):
         errors = []
@@ -193,7 +204,7 @@ class Section(Model):
         if is_missing(self.traffic_level) and is_missing(self.aadt_total):
             errors.append("Must define either aadt_total or traffic_level")
         if is_missing(self.terrain):
-            errors.append('No terrain data')
+            errors.append("No terrain data")
         return errors if errors else None
 
 
