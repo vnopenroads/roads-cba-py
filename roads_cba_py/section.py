@@ -1,17 +1,39 @@
 import json
+from os import stat
 from typing import List, Optional
+from schematics.exceptions import ConversionError
 
 from schematics.models import Model
 from schematics.types import IntType, StringType, FloatType
 
+
 class InvalidSection(object):
-    def __init__(self, error, original_data):
-        print(error)
-        self.error = error
+    def __init__(self, errors, original_data):
+        self.errors = InvalidSection.clean_errors(errors)
         self.original_data = original_data
 
     def invalid_reason(self):
-        return self.error
+        return self.errors
+
+    @staticmethod
+    def clean_errors(errors):
+        return [InvalidSection.clean_error(k, v) for k, v in errors.items()]
+
+    @staticmethod
+    def clean_error(k, v):
+        print(type(v), v)
+        print(type(k), k)
+        print(isinstance(v, ConversionError))
+        if isinstance(v, ConversionError):
+            return f"Invalid characters in '{k}', expected float"
+        return f"Generic error: {k}"
+
+
+def parse_section(json):
+    try:
+        return Section(json)
+    except Exception as err:
+        return InvalidSection(err.errors, json)
 
 
 class Section(Model):
@@ -122,7 +144,9 @@ class Section(Model):
             "aadt_smalltruck": Section.maybe_int(row["section_light_truck"]),
             "aadt_mediumtruck": Section.maybe_int(row["section_medium_truck"]),
             "aadt_largetruck": Section.maybe_int(row["section_heavy_truck"]),
-            "aadt_articulatedtruck": Section.maybe_int(row["section_articulated_truck"]),
+            "aadt_articulatedtruck": Section.maybe_int(
+                row["section_articulated_truck"]
+            ),
             "aadt_smallbus": Section.maybe_int(row["section_small_bus"]),
             "aadt_mediumbus": Section.maybe_int(row["section_medium_bus"]),
             "aadt_largebus": Section.maybe_int(row["section_large_bus"]),
