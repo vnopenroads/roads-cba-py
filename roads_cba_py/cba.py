@@ -501,14 +501,15 @@ class CostBenefitAnalysisModel:
         if section.traffic_level == 0:
             section.traffic_level = traffic_range_lu(section.aadt_total)
         if section.traffic_growth == 0:
-            section.traffic_growth = 1
+            section.traffic_growth = 1  # if its not defined, assume the lowest growth
 
         if section.structural_no == 0:
             if section.surface_type < 4:
-                msg = (
-                    f"{section.orma_way_id} {section.surface_type}, {section.traffic_level}, {section.condition_class}"
-                )
-                if section.traffic_level and section.traffic_level > 14:
+                if section.traffic_level > 14:
+                    msg = (
+                        f"Section {section.orma_way_id} has traffic level ({section.traffic_level}) > 14, "
+                        + f"surface_type = {section.surface_type}, condition_class = {section.condition_class}"
+                    )
                     raise ValueError(msg)
                 section.structural_no = dTrafficLevels[section.traffic_level, 12 + section.condition_class]
 
