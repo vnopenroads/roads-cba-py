@@ -1,14 +1,45 @@
 import json
+from os import stat
 from typing import List, Optional
+from schematics.exceptions import ConversionError
 
 from schematics.models import Model
 from schematics.types import IntType, StringType, FloatType
 
 
+class InvalidSection(object):
+    def __init__(self, errors, original_data):
+        self.errors = InvalidSection.clean_errors(errors)
+        self.original_data = original_data
+
+    def invalid_reason(self):
+        return self.errors
+
+    @staticmethod
+    def clean_errors(errors):
+        return [InvalidSection.clean_error(k, v) for k, v in errors.items()]
+
+    @staticmethod
+    def clean_error(k, v):
+        # print(type(v), v)
+        # print(type(k), k)
+        # print(isinstance(v, ConversionError))
+        if isinstance(v, ConversionError):
+            return f"Invalid characters in '{k}', expected float"
+        return f"Generic error: {k}"
+
+
+def parse_section(json):
+    try:
+        return Section(json)
+    except Exception as err:
+        return InvalidSection(err.errors, json)
+
+
 class Section(Model):
-    orma_way_id = StringType(max_length=20, min_length=1)
+    orma_way_id = StringType(max_length=20, min_length=1, required=True)
     vpromm_id = StringType(max_length=20, min_length=1)
-    section_id = StringType(max_length=30, required=True)
+    # section_id = StringType(max_length=30, required=True)
     road_number = StringType(max_length=10)
     road_name = StringType(max_length=255, min_length=1)
     road_start = StringType(max_length=255, min_length=1)
@@ -31,34 +62,35 @@ class Section(Model):
     start_km = FloatType()
     end_km = FloatType()
     length = FloatType(required=True)
-    lanes = IntType()
-    width = FloatType()
-    road_class = IntType()
-    terrain = IntType()
-    temperature = IntType()
-    moisture = IntType()
-    road_type = IntType()
-    surface_type = IntType()
-    condition_class = IntType()
-    roughness = FloatType()
-    traffic_level = IntType()
-    traffic_growth = IntType()
-    structural_no = FloatType()
-    pavement_age = IntType()
+    vpromms_length = FloatType()
+    lanes = IntType(default=0)
+    width = FloatType(default=0)
+    road_class = IntType(default=0)
+    terrain = IntType(default=0)
+    temperature = IntType(default=0)
+    moisture = IntType(default=0)
+    road_type = IntType(default=0)
+    surface_type = IntType(default=0)
+    condition_class = IntType(default=0)
+    roughness = FloatType(default=0)
+    traffic_level = IntType(default=0)
+    traffic_growth = IntType(default=0)
+    structural_no = FloatType(default=0)
+    pavement_age = IntType(default=0)
 
-    aadt_motorcyle = FloatType()
-    aadt_carsmall = FloatType()
-    aadt_carmedium = FloatType()
-    aadt_delivery = FloatType()
-    aadt_4wheel = FloatType()
-    aadt_smalltruck = FloatType()
-    aadt_mediumtruck = FloatType()
-    aadt_largetruck = FloatType()
-    aadt_articulatedtruck = FloatType()
-    aadt_smallbus = FloatType()
-    aadt_mediumbus = FloatType()
-    aadt_largebus = FloatType()
-    aadt_total = FloatType()
+    aadt_motorcyle = FloatType(default=0.0)
+    aadt_carsmall = FloatType(default=0.0)
+    aadt_carmedium = FloatType(default=0.0)
+    aadt_delivery = FloatType(default=0.0)
+    aadt_4wheel = FloatType(default=0.0)
+    aadt_smalltruck = FloatType(default=0.0)
+    aadt_mediumtruck = FloatType(default=0.0)
+    aadt_largetruck = FloatType(default=0.0)
+    aadt_articulatedtruck = FloatType(default=0.0)
+    aadt_smallbus = FloatType(default=0.0)
+    aadt_mediumbus = FloatType(default=0.0)
+    aadt_largebus = FloatType(default=0.0)
+    aadt_total = FloatType(default=0.0)
 
     def __str__(self):
         return str(self.to_primitive())
@@ -118,11 +150,14 @@ class Section(Model):
             "aadt_largebus": Section.maybe_int(row["section_large_bus"]),
             "aadt_total": Section.maybe_int(row["aadt"]),
         }
-        return Section(in_data)
+        try:
+            return Section(in_data)
+        except Exception as err:
+            return InvalidSection(err, in_data)
 
     def to_dict(self):
         return {
-            "orma_way_id": self.orma_way_id,
+            "orma_way_id": self.id,
             "section_id": self.section_id,
             "road_number": self.road_number,
             "road_name": self.road_name,
@@ -177,3 +212,23 @@ class Section(Model):
             self.aadt_mediumbus,
             self.aadt_largebus,
         )
+
+    REQUIRED_FIELDS = ["lanes", "width"]
+
+    def invalid_reason(self):
+        errors = []
+        if is_missing(self.road_type) and is_missing(self.surface_type):
+            errors.append("Must define either road type or road surface type")
+        if is_missing(self.width) and is_missing(self.lanes):
+            errors.append("Must define either road width or number of lanes")
+        if is_missing(self.roughness) and is_missing(self.condition_class):
+            errors.append("Must define either roughness or road condition")
+        if is_missing(self.traffic_level) and is_missing(self.aadt_total):
+            errors.append("Must define either aadt_total or traffic_level")
+        if is_missing(self.terrain):
+            errors.append("No terrain data")
+        return errors if errors else None
+
+
+def is_missing(val):
+    return val is None or val == 0

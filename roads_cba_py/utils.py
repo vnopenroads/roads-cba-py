@@ -4,7 +4,11 @@ import math
 def comp(a, b):
     a = a.__dict__["_data"]
     b = b.__dict__["_data"]
-    diffs = [print_diff(k, v1, b[k]) for k, v1 in a.items() if not check(v1, b[k]) and k != "eirr"]
+    diffs = [
+        print_diff(k, v1, b[k])
+        for k, v1 in a.items()
+        if not check(v1, b[k]) and k != "eirr"
+    ]
     return len(diffs) == 0
 
 
@@ -43,3 +47,14 @@ def print_diff(k, v1, v2):
         return None
 
     print(f"{k : >10} => {comp_str(v1, v2)}")
+
+
+def flatten(a_of_a):
+    return [x for y in a_of_a for x in y]
+
+
+def split_on_condition(seq, condition):
+    a, b = [], []
+    for item in seq:
+        (a if condition(item) else b).append(item)
+    return a, b

@@ -48,6 +48,44 @@ dTrafficLevels = np.array(
     dtype=np.float64,
 )
 
+
+class TrafficLevelRow(object):
+    def __init__(self, i, arr):
+        self.ia = i
+        (
+            self.volume,
+            self.motorbike,
+            self.small_car,
+            self.medium_car,
+            self.four_wd,
+            self.delivery_veh,
+            self.light_truck,
+            self.medium_truck,
+            self.heavy_truck,
+            self.art_truck,
+            self.small_bus,
+            self.medium_bus,
+            self.large_bus,
+            *self.condition_classes,
+        ) = arr
+
+    def as_dict(self):
+        return {
+            "volume": self.volume,
+            "motor-cycle": self.motorbike,
+            "small-car": self.small_car,
+            "medium-car": self.medium_car,
+            "delivery": self.delivery_veh,
+            "4-whell": self.four_wd,
+            "light-truck": self.light_truck,
+            "medium-truck": self.medium_truck,
+            "heavy-truck": self.heavy_truck,
+            "small-bus": self.small_bus,
+            "medium-bus": self.medium_bus,
+            "large-bus": self.large_bus,
+        }
+
+
 traffic_ranges_data = [
     (0, 50, 1),
     (50, 100, 2),
@@ -143,6 +181,23 @@ class MaintenanceAlternative(object):
 
     def get_unit_cost(self, terrain):
         return self.unit_costs[terrain]
+
+    def as_dict(self, number):
+        return {
+            "number": number,
+            "name": self.name,
+            "code": self.code,
+            "class": self.work_class,
+            "flat": self.cost_flat,
+            "hilly": self.cost_hilly,
+            "mountainous": self.cost_mountainous,
+            "roughness": self.iri,
+            "thickness": self.thickness,
+            "strength": self.strength,
+            "structural-no": self.snc,
+            "RW-num": self.repair,
+            "interval": self.repair_period,
+        }
 
 
 dRoadWorks = [
@@ -269,6 +324,47 @@ dRoadWorks = [
     ["Upgrade to Cement Concrete", "U-C", "Upgrade", 500.0, 500.0, 500.0, 1.8, 3, 7.0, 1, None, None, None, 1, 8],
 ]
 alternatives = [MaintenanceAlternative(i, arr) for i, arr in enumerate(dRoadWorks)]
+
+
+def f(row, number):
+    (
+        name,
+        code,
+        clazz,
+        flat,
+        hilly,
+        mnt,
+        rghness,
+        lanes,
+        width,
+        surface,
+        thckness,
+        strength,
+        struct_num,
+        rw_num,
+        interval,
+    ) = row
+    print(
+        {
+            "number": number,
+            "name": name,
+            "code": code,
+            "class": clazz,
+            "flat": flat,
+            "hilly": hilly,
+            "mountainous": mnt,
+            "roughness": rghness,
+            "thickness": thckness,
+            "strength": strength,
+            "structural-no": struct_num,
+            "RW-num": rw_num,
+            "interval": interval,
+        }
+    )
+
+
+# f(dRoadWorks[0], 0)
+
 
 # 7. Recurrent: surface type X lanes
 dRecurrent = np.array(
@@ -3279,6 +3375,7 @@ def default_range(data):
         if e is None:
             print(v)
             print(t)
+            raise ValueError(f"couldn't find a lookup for {v} in {t}")
         return e.data
 
     return lu
