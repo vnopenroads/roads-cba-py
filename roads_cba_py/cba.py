@@ -485,8 +485,8 @@ class CostBenefitAnalysisModel:
         if section.traffic_level == 0 and section.aadt_total == 0:
             raise ValueError("Must define either traffic level class or traffic data")
 
-        msg = f"{section.traffic_level}, {section.aadt_total} {section.orma_way_id}"
         if section.traffic_level is None:
+            msg = f"Missing traffic level on section {section.orma_way_id} with aadt_total = {section.aadt_total}"
             raise ValueError(msg)
 
         if section.aadt_total == 0:
