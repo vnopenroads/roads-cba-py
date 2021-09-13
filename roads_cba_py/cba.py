@@ -348,7 +348,7 @@ class CostBenefitAnalysisModel:
             "con_base": dCondCON[0].tolist(),
             "financial_recurrent_cost": dCostRecurrentFin[iTheSelected].tolist(),
             "net_benefits": dNetTotal[iTheSelected].tolist(),
-            "orma_way_id": section.id,
+            "orma_way_id": section.orma_way_id,
         }
         return CbaResult(results)
 
@@ -485,7 +485,7 @@ class CostBenefitAnalysisModel:
         if section.traffic_level == 0 and section.aadt_total == 0:
             raise ValueError("Must define either traffic level class or traffic data")
 
-        msg = f"{section.traffic_level}, {section.aadt_total} {section.id}"
+        msg = f"{section.traffic_level}, {section.aadt_total} {section.orma_way_id}"
         if section.traffic_level is None:
             raise ValueError(msg)
 
@@ -509,7 +509,9 @@ class CostBenefitAnalysisModel:
 
         if section.structural_no == 0:
             if section.surface_type < 4:
-                msg = f"{section.id} {section.surface_type}, {section.traffic_level}, {section.condition_class}"
+                msg = (
+                    f"{section.orma_way_id} {section.surface_type}, {section.traffic_level}, {section.condition_class}"
+                )
                 if section.traffic_level and section.traffic_level > 14:
                     raise ValueError(msg)
                 section.structural_no = dTrafficLevels[section.traffic_level, 12 + section.condition_class]

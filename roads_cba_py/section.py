@@ -21,9 +21,9 @@ class InvalidSection(object):
 
     @staticmethod
     def clean_error(k, v):
-        print(type(v), v)
-        print(type(k), k)
-        print(isinstance(v, ConversionError))
+        # print(type(v), v)
+        # print(type(k), k)
+        # print(isinstance(v, ConversionError))
         if isinstance(v, ConversionError):
             return f"Invalid characters in '{k}', expected float"
         return f"Generic error: {k}"
@@ -37,9 +37,9 @@ def parse_section(json):
 
 
 class Section(Model):
-    id = StringType(max_length=20, min_length=1)
-    vpromms_id = StringType(max_length=20, min_length=1)
-    section_id = StringType(max_length=30, required=True)
+    orma_way_id = StringType(max_length=20, min_length=1, required=True)
+    vpromm_id = StringType(max_length=20, min_length=1)
+    # section_id = StringType(max_length=30, required=True)
     road_number = StringType(max_length=10)
     road_name = StringType(max_length=255, min_length=1)
     road_start = StringType(max_length=255, min_length=1)
@@ -144,9 +144,7 @@ class Section(Model):
             "aadt_smalltruck": Section.maybe_int(row["section_light_truck"]),
             "aadt_mediumtruck": Section.maybe_int(row["section_medium_truck"]),
             "aadt_largetruck": Section.maybe_int(row["section_heavy_truck"]),
-            "aadt_articulatedtruck": Section.maybe_int(
-                row["section_articulated_truck"]
-            ),
+            "aadt_articulatedtruck": Section.maybe_int(row["section_articulated_truck"]),
             "aadt_smallbus": Section.maybe_int(row["section_small_bus"]),
             "aadt_mediumbus": Section.maybe_int(row["section_medium_bus"]),
             "aadt_largebus": Section.maybe_int(row["section_large_bus"]),

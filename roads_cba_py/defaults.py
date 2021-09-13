@@ -363,7 +363,7 @@ def f(row, number):
     )
 
 
-f(dRoadWorks[0], 0)
+# f(dRoadWorks[0], 0)
 
 
 # 7. Recurrent: surface type X lanes

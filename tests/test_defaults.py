@@ -19,7 +19,7 @@ class TestDefaults(unittest.TestCase):
         self.assertEqual("first bucket", lu(1.49))
         self.assertEqual("second bucket", lu(1.5))
 
-    def test_extract_for_webapp(self):
+    # def test_extract_for_webapp(self):
 
-        for e, i in enumerate(dTrafficLevels):
-            print(TrafficLevelRow(e, i).as_dict())
+    #     for e, i in enumerate(dTrafficLevels):
+    #         print(TrafficLevelRow(e, i).as_dict())

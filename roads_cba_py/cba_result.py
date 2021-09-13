@@ -38,7 +38,7 @@ class CbaResult(Model):
 
     def to_dict(self):
         rv = {
-            "orma_way_id": self.id,
+            "orma_way_id": self.orma_way_id,
             "work_class": self.work_class,
             "work_type": self.work_type,
             "work_name": self.work_name,
