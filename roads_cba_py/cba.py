@@ -490,13 +490,9 @@ class CostBenefitAnalysisModel:
             raise ValueError(msg)
 
         if section.aadt_total == 0:
-            # print(section.get_aadts())
             section.aadt_total = dTrafficLevels[section.traffic_level - 1, 0]
-            # print(section.aadt_total)
             proportions = dTrafficLevels[section.traffic_level - 1, 1:13]
-            # print(proportions, sum(proportions))
             section.set_aadts(proportions * section.aadt_total)
-            # print(section.traffic_level, section.get_aadts(), sum(section.get_aadts()))
 
         calc_aadt_total = sum(section.get_aadts())
         if calc_aadt_total != section.aadt_total:
