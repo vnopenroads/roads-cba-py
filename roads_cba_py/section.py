@@ -38,7 +38,7 @@ def parse_section(json):
 
 class Section(Model):
     orma_way_id = StringType(max_length=20, min_length=1, required=True)
-    vpromm_id = StringType(max_length=20, min_length=1)
+    vpromms_id = StringType(max_length=20, min_length=1)
     # section_id = StringType(max_length=30, required=True)
     road_number = StringType(max_length=10)
     road_name = StringType(max_length=255, min_length=1)
