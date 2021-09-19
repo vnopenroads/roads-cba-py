@@ -4,9 +4,6 @@ from numpy_financial import irr
 from roads_cba_py import defaults
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import (
-    dDiscount_Rate,
-    dEconomic_Factor,
-    dGrowth,
     dTrafficLevels,
     dVehicleFleet,
     iSurfaceDefaults,
@@ -33,10 +30,9 @@ from roads_cba_py.utils import print_diff
 
 
 class CostBenefitAnalysisModel:
-    def __init__(self):
-        self.dDiscount_Rate = dDiscount_Rate
-        self.dEconomic_Factor = dEconomic_Factor
-        self.dGrowth = dGrowth
+    def __init__(self, config):
+        self.config = config
+        self.dGrowth = self.config.growth_rates
         self.dTrafficLevels = dTrafficLevels
         self.dVehicleFleet = dVehicleFleet
         self.iSurfaceDefaults = iSurfaceDefaults
@@ -194,7 +190,7 @@ class CostBenefitAnalysisModel:
                     # Capital work costs
                     unit_cst = alt.get_unit_cost(iTerrain)
                     dCostCapitalFin[ia, iy] = unit_cst * dCondLength[ia, iy] * dCondWidth[ia, iy] / 1000.0 * dCostFactor
-                    dCostCapitalEco[ia, iy] = dCostCapitalFin[ia, iy] * self.dEconomic_Factor
+                    dCostCapitalEco[ia, iy] = dCostCapitalFin[ia, iy] * self.config.economic_factor
 
                     sRoadCode[ia, iy] = sSolCode[ia] = alt.code
                     sSolName[ia] = alt.name
@@ -220,7 +216,7 @@ class CostBenefitAnalysisModel:
                     dCostRepairFin[ia, iy] = (
                         repair_alt.get_unit_cost(iTerrain) * dCondLength[ia, iy] * dCondWidth[ia, iy] / 1000.0
                     )
-                    dCostRepairEco[ia, iy] = dCostRepairFin[ia, iy] * self.dEconomic_Factor
+                    dCostRepairEco[ia, iy] = dCostRepairFin[ia, iy] * self.config.economic_factor
 
                 # recurrent road work without recurrent maintenance condition multipliers
                 dCostRecurrentFin[ia, iy] = (
@@ -229,7 +225,7 @@ class CostBenefitAnalysisModel:
                 dCostRecurrentEco[ia, iy] = (
                     self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1]
                     * dCondLength[ia, iy]
-                    * self.dEconomic_Factor
+                    * self.config.economic_factor
                     / 1000000.0
                 )
 
@@ -311,7 +307,7 @@ class CostBenefitAnalysisModel:
 
                 # NPV
                 # Serious Note: raise to the power iy not (iy - 1) in the following equation
-                dSolNPV[ia] = dSolNPV[ia] + dNetTotal[ia, iy] / ((1 + self.dDiscount_Rate) ** (iy))
+                dSolNPV[ia] = dSolNPV[ia] + dNetTotal[ia, iy] / ((1 + self.config.discount_rate) ** (iy))
                 dSolNPVKm[ia] = dSolNPV[ia] / dCondLength[ia, 0]
 
                 if dSolCost[ia] > 0:
@@ -427,10 +423,10 @@ class CostBenefitAnalysisModel:
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
 
         idx = iGrowthScenario - 1
-        growth_factor = 1.0 + self.dGrowth[idx : idx + 1, :]
+        growth_factor = 1.0 + self.dGrowth.for_scenario(iGrowthScenario).as_numpy  # [idx : idx + 1, :]
 
         # Use numpy cumumlative sum to calculate the growth into the next 20 years
-        dAADT[0:12, 1:20] = growth_factor.T
+        dAADT[0:12, 1:20] = growth_factor.T[:, None]
         np.cumprod(dAADT[0:12, :], axis=1, out=dAADT[0:12, :])
 
         # Calculate the total AADT over all the vehicle classes
