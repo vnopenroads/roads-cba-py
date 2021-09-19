@@ -1,40 +1,35 @@
 import json
 
 from numpy import isnan
-from schematics import Model
-from schematics.types import StringType, FloatType, ListType
+from pydantic import BaseModel
+from typing import List
 
 
-class CbaResult(Model):
-    orma_way_id = StringType(max_length=20, min_length=1)
-    work_class = StringType(required=True, min_length=1)
-    work_type = StringType(required=True, min_length=1)
-    work_name = StringType(required=True, min_length=1)
-    work_cost = FloatType(required=True)
-    work_cost_km = FloatType(required=True)
-    work_year = FloatType(required=True)
-    npv = FloatType(required=True)
-    npv_km = FloatType(required=True)
-    npv_cost = FloatType(required=True)
-    eirr = FloatType(required=True)
-    aadt = ListType(FloatType, required=True, min_size=20, max_size=20)
-    truck_percent = FloatType(required=True)
-    vehicle_utilization = FloatType(required=True)
-    esa_loading = FloatType(required=True)
-    iri_projection = ListType(FloatType, required=True, min_size=20, max_size=20)
-    iri_base = ListType(FloatType, required=True, min_size=20, max_size=20)
-    con_projection = ListType(FloatType, required=True, min_size=20, max_size=20)
-    con_base = ListType(FloatType, required=True, min_size=20, max_size=20)
-    financial_recurrent_cost = ListType(FloatType, required=True, min_size=20, max_size=20)
-    net_benefits = ListType(FloatType, required=True, min_size=20, max_size=20)
+class CbaResult(BaseModel):
+    orma_way_id: str
+    work_class: str
+    work_type: str
+    work_name: str
+    work_cost: float
+    work_cost_km: float
+    work_year: float
+    npv: float
+    npv_km: float
+    npv_cost: float
+    eirr: float
+    aadt: List[float]
+    truck_percent: float
+    vehicle_utilization: float
+    esa_loading: float
+    iri_projection: List[float]
+    iri_base: List[float]
+    con_projection: List[float]
+    con_base: List[float]
+    financial_recurrent_cost: List[float]
+    net_benefits: List[float]
 
     def __repr__(self):
         return str(self.to_primitive())
-
-    @classmethod
-    def from_file(cls, filename):
-        with open(filename) as f:
-            return CbaResult(json.load(f))
 
     def to_dict(self):
         rv = {

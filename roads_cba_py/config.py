@@ -1,34 +1,33 @@
 import json
 
-from schematics import Model
-from schematics.types import FloatType, ModelType
+from pydantic import BaseModel
 
 
-class ScenarioGrowthRates(Model):
-    motorcycle = FloatType(required=True)
-    small_car = FloatType(required=True)
-    medium_car = FloatType(required=True)
-    delivery = FloatType(required=True)
-    four_wheel_drive = FloatType(required=True)
-    light_truck = FloatType(required=True)
-    medium_truck = FloatType(required=True)
-    heavy_truck = FloatType(required=True)
-    articulated_truck = FloatType(required=True)
-    small_bus = FloatType(required=True)
-    medium_bus = FloatType(required=True)
-    large_bus = FloatType(required=True)
+class ScenarioGrowthRates(BaseModel):
+    motorcycle: float
+    small_car: float
+    medium_car: float
+    delivery: float
+    four_wheel_drive: float
+    light_truck: float
+    medium_truck: float
+    heavy_truck: float
+    articulated_truck: float
+    small_bus: float
+    medium_bus: float
+    large_bus: float
 
 
-class GrowthRates(Model):
-    very_low = ModelType(ScenarioGrowthRates)
-    low = ModelType(ScenarioGrowthRates)
-    medium = ModelType(ScenarioGrowthRates)
-    high = ModelType(ScenarioGrowthRates)
-    very_high = ModelType(ScenarioGrowthRates)
+class GrowthRates(BaseModel):
+    very_low: ScenarioGrowthRates
+    low: ScenarioGrowthRates
+    medium: ScenarioGrowthRates
+    high: ScenarioGrowthRates
+    very_high: ScenarioGrowthRates
 
 
-class Config(Model):
-    growth_rates = ModelType(GrowthRates, required=True)
+class Config(BaseModel):
+    growth_rates: GrowthRates
     # fleet_characteristics = ModelType(FleetCharacters, required=True)
 
 

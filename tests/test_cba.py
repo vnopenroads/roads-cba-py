@@ -8,7 +8,6 @@ from os.path import join, dirname
 from pstats import SortKey
 from random import sample
 
-import schematics
 
 import roads_cba_py.cba as cba
 from roads_cba_py.cba_result import CbaResult
@@ -20,7 +19,6 @@ class TestCbaModel(unittest.TestCase):
 
     def setUp(self) -> None:
         self.cba_model = cba.CostBenefitAnalysisModel()
-        warnings.filterwarnings("ignore", category=schematics.deprecated.SchematicsDeprecationWarning)
 
     def test_all_data_matches(self):
 
@@ -30,7 +28,7 @@ class TestCbaModel(unittest.TestCase):
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
 
         def process_ident(ident):
-            input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+            input = Section.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
             return self.cba_model.compute_cba_for_section(input)
 
         start = time.time()
@@ -38,7 +36,7 @@ class TestCbaModel(unittest.TestCase):
         # print(f"Time: {time.time() - start}")
 
         for ident, actual_output in actual_outputs.items():
-            expected_output = CbaResult.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
+            expected_output = CbaResult.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
             diffs = {
                 k: [actual_output.to_dict()[k], expected_output.to_dict()[k], v]
                 for k, v in actual_output.compare(expected_output).items()
@@ -59,7 +57,7 @@ class TestCbaModel(unittest.TestCase):
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
 
         def process_ident(ident):
-            input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+            input = Section.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
             return self.cba_model.compute_cba_for_section(input)
 
         def foo():
@@ -74,7 +72,7 @@ class TestCbaModel(unittest.TestCase):
 
     def test_defaults(self):
         ident = "615073_305"
-        section = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+        section = Section.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
 
         self.assertEqual(0, section.roughness)
         section = self.cba_model.fill_defaults(section)

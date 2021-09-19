@@ -1,5 +1,5 @@
 numpy
 numpy_financial
 pandas
-schematics
+pydantic
 intervaltree

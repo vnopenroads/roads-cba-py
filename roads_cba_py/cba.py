@@ -350,7 +350,7 @@ class CostBenefitAnalysisModel:
             "net_benefits": dNetTotal[iTheSelected].tolist(),
             "orma_way_id": section.orma_way_id,
         }
-        return CbaResult(results)
+        return CbaResult.parse_obj(results)
 
     # This converts the surface type, road class condition class into an index offset into the dWorkEvaluated array
     # There are 5 unique condition classes, 10 road classes which defines the math below

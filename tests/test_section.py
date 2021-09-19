@@ -7,38 +7,34 @@ from json import dumps
 
 import os
 
-from schematics.exceptions import DataError
-
 sys.path.append(".")
 from roads_cba_py.section import Section, parse_section
 
 
+example_data_dir = join(dirname(__file__), "example_data")
+
+
 class TestSection(unittest.TestCase):
-    def setUp(self):
-        import warnings
-        from schematics.deprecated import SchematicsDeprecationWarning
-
-        warnings.filterwarnings("ignore", category=SchematicsDeprecationWarning)
-
     def test_simple(self):
-        s = Section({"orma_way_id": "7"})
-        s = TestSection.load_from_file("section_635950_304.json")
+        s = Section(orma_way_id="635950_304", length=7.0)
         self.assertEqual("635950_304", s.orma_way_id)
 
-    @classmethod
-    def load_from_file(cls, filename):
-        example_data_dir = join(dirname(__file__), "example_data")
-        return Section.from_file(join(example_data_dir, filename))
+        print(os.getcwd())
+        s = Section.parse_file(join(example_data_dir, "section_635950_304.json"))
+        self.assertEqual("635950_304", s.orma_way_id)
 
     def test_invalid(self):
-        s = Section({"orma_way_id": "7", "aadt_delivery": "17"})
+        s = Section(orma_way_id=7, aadt_delivery=17, length=0.7)
         self.assertEqual(17, s.aadt_delivery)
 
-        s = parse_section({"orma_way_id": "7", "aadt_delivery": "17;"})
+        s = parse_section({"orma_way_id": "7", "length": 0.7, "aadt_delivery": "17;"})
         self.assertEqual(
             ["Invalid characters in 'aadt_delivery', expected float"],
             s.invalid_reason(),
         )
+
+        s = parse_section({"orma_way_id": None, "length": 0.7, "aadt_delivery": "17"})
+        self.assertEqual(["Missing required field: 'orma_way_id'"], s.invalid_reason())
 
     def test_split(self):
         a = [1, 2, 3, 4, 5]

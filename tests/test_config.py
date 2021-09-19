@@ -1,10 +1,5 @@
 import copy
-import os
-import re
-import time
 import unittest
-import glob
-import warnings
 from os.path import join, dirname
 
 from roads_cba_py.config import ScenarioGrowthRates, GrowthRates
@@ -34,10 +29,12 @@ class TestConfig(unittest.TestCase):
         json5 = copy.deepcopy(json)
         json5["large_bus"] = 3.0
 
-        scenario_rates = ScenarioGrowthRates(json)
+        scenario_rates = ScenarioGrowthRates.parse_obj(json)
         self.assertEqual(scenario_rates.medium_bus, 1.0)
         self.assertEqual(scenario_rates.large_bus, 2.0)
 
-        rates = GrowthRates({"very_low": json, "low": json2, "medium": json3, "high": json4, "very_high": json5})
+        rates = GrowthRates.parse_obj(
+            {"very_low": json, "low": json2, "medium": json3, "high": json4, "very_high": json5}
+        )
         self.assertEqual(rates.very_low.large_bus, 2.0)
         self.assertEqual(rates.very_high.large_bus, 3.0)
