@@ -1,10 +1,10 @@
+import sys
 import numpy as np
 from numpy_financial import irr
 
 from roads_cba_py import defaults
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import (
-    dGrowth,
     dTrafficLevels,
     dVehicleFleet,
     iSurfaceDefaults,
@@ -423,10 +423,7 @@ class CostBenefitAnalysisModel:
 
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
 
-        idx = iGrowthScenario - 1
         growth_factor = 1.0 + self.dGrowth.for_scenario(iGrowthScenario).as_numpy  # [idx : idx + 1, :]
-        print(growth_factor)
-        print(dGrowth[idx : idx + 1, :])
 
         # Use numpy cumumlative sum to calculate the growth into the next 20 years
         dAADT[0:12, 1:20] = growth_factor.T[:, None]
