@@ -10,6 +10,7 @@ class Config(BaseModel):
     discount_rate: float = 0.12
     economic_factor: float = 0.91
     growth_rates: GrowthRates = GrowthRates()
+    # traffic_levels: TrafficLevels = TrafficLevels()
     # fleet_characteristics = ModelType(FleetCharacters, required=True)
 
 

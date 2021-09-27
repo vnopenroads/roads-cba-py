@@ -1,10 +1,12 @@
 import copy
+from roads_cba_py.configs.traffic_levels import TrafficProportionsByLevel
 import unittest
 from os.path import join, dirname
 import numpy as np
 import numpy.testing as npt
 
 from roads_cba_py.configs.growth_rates import GrowthRate, GrowthRateByMode, GrowthRates, GrowthScenario, GrowthRate
+from roads_cba_py.configs.traffic_levels import TrafficProportionsByLevel
 
 
 class TestConfig(unittest.TestCase):
@@ -57,3 +59,7 @@ class TestConfig(unittest.TestCase):
             "medium_bus": 1.0,
             "large_bus": 2.0,
         }
+
+    def test_traffic_levels(self):
+        tpbl = TrafficProportionsByLevel()
+        print(tpbl)
