@@ -1,6 +1,7 @@
 import copy
 from roads_cba_py.configs.traffic_levels import TrafficProportionsByLevel
 import unittest
+import json
 from os.path import join, dirname
 import numpy as np
 import numpy.testing as npt
@@ -62,4 +63,4 @@ class TestConfig(unittest.TestCase):
 
     def test_traffic_levels(self):
         tpbl = TrafficProportionsByLevel()
-        print(tpbl)
+        print((tpbl.json(exclude={"by_level": {"__all__": {"proportions"}}})))

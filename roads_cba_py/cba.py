@@ -5,7 +5,6 @@ from numpy_financial import irr
 from roads_cba_py import defaults
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import (
-    dTrafficLevels,
     dVehicleFleet,
     iSurfaceDefaults,
     dWidthDefaults,
@@ -34,7 +33,7 @@ class CostBenefitAnalysisModel:
     def __init__(self, config):
         self.config = config
         self.dGrowth = self.config.growth_rates
-        self.dTrafficLevels = dTrafficLevels
+        self.dTrafficLevels = self.config.traffic_levels
         self.dVehicleFleet = dVehicleFleet
         self.iSurfaceDefaults = iSurfaceDefaults
         self.dWidthDefaults = dWidthDefaults
@@ -486,8 +485,8 @@ class CostBenefitAnalysisModel:
             raise ValueError(msg)
 
         if section.aadt_total == 0:
-            section.aadt_total = dTrafficLevels[section.traffic_level - 1, 0]
-            proportions = dTrafficLevels[section.traffic_level - 1, 1:13]
+            section.aadt_total = self.dTrafficLevels.by_level[section.traffic_level - 1].aadt
+            proportions = self.dTrafficLevels.by_level[section.traffic_level - 1].proportions
             section.set_aadts(proportions * section.aadt_total)
 
         calc_aadt_total = sum(section.get_aadts())
@@ -507,7 +506,7 @@ class CostBenefitAnalysisModel:
                         + f"surface_type = {section.surface_type}, condition_class = {section.condition_class}"
                     )
                     raise ValueError(msg)
-                section.structural_no = dTrafficLevels[section.traffic_level, 12 + section.condition_class]
+                section.structural_no = self.dTrafficLevels.by_level[section.traffic_level].struct_no
 
         return section
 

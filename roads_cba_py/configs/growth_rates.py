@@ -48,6 +48,9 @@ class GrowthRate(object):
         self.default = val
         self.as_numpy = np.array([val] * 12)
 
+    def __repr__(self):
+        return str(self.default)
+
 
 class GrowthScenario(IntEnum):
     very_low = 1
@@ -55,6 +58,9 @@ class GrowthScenario(IntEnum):
     medium = 3
     high = 4
     very_high = 5
+
+    def __repr__(self):
+        return self._name_
 
 
 def upgrade_float(v):
@@ -89,3 +95,6 @@ class GrowthRates(ConfigModel):
     _normalize_m = validator("medium", allow_reuse=True)(upgrade_float)
     _normalize_h = validator("high", allow_reuse=True)(upgrade_float)
     _normalize_vh = validator("very_high", allow_reuse=True)(upgrade_float)
+
+    class Config:
+        json_encoders = {GrowthRate: lambda v: v.default, np.ndarray: lambda v: v.tolist()}

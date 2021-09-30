@@ -25,7 +25,7 @@ class TestCbaModel(unittest.TestCase):
     def test_all_data_matches(self):
 
         files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
-        files = sample(files, 1)
+        files = sample(files, 100)
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
         # idents = ["638901_301"]
 

@@ -2,7 +2,7 @@ import json
 import numpy as np
 
 from enum import IntEnum
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
 from roads_cba_py.configs.config_model import ConfigModel
 
 VEHICLE_TYPES = [
@@ -36,6 +36,10 @@ class TrafficLevel(IntEnum):
     LEVEL_11 = 11
     LEVEL_12 = 12
     LEVEL_13 = 13
+    LEVEL_14 = 14
+
+
+TrafficLevelU = Union[TrafficLevel, str]
 
 
 class TrafficProportions(ConfigModel):
@@ -54,11 +58,11 @@ class TrafficProportions(ConfigModel):
     medium_bus: float
     large_bus: float
 
-    as_numpy: Optional[np.ndarray]
+    proportions: Optional[np.ndarray]
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self.as_numpy = np.array(
+        self.proportions = np.array(
             [
                 self.motorcycle,
                 self.small_car,
@@ -74,6 +78,12 @@ class TrafficProportions(ConfigModel):
                 self.large_bus,
             ]
         )
+
+    class Config:
+        json_encoders = {np.ndarray: lambda v: v.tolist()}
+
+    # def json(self):
+    #     return super(TrafficProportions, self).json(exclude={"proportions"})
 
     @classmethod
     def from_array(cls, array):
@@ -111,3 +121,6 @@ class TrafficProportionsByLevel(ConfigModel):
         missing_keys = DEFAULTS.keys() - self.by_level.keys()
         for k in missing_keys:
             self.by_level[k] = TrafficProportions.from_array(DEFAULTS[k])
+
+    class Config:
+        json_encoders = {np.ndarray: lambda v: v.tolist()}
