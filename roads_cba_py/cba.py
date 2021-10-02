@@ -1,16 +1,12 @@
-import sys
 import numpy as np
 from numpy_financial import irr
 
-from roads_cba_py import defaults
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import (
     dVehicleFleet,
     iSurfaceDefaults,
     dWidthDefaults,
     dConditionData,
-    dRoadWorks,
-    dRecurrent,
     dRecMult,
     dWorkEvaluated,
     dm_coeff,
@@ -21,7 +17,6 @@ from roads_cba_py.defaults import (
     cc_from_iri_lu,
     default_lanes,
     traffic_ranges,
-    alternatives,
     traffic_range_lu,
     lanes_lu,
 )
@@ -32,14 +27,11 @@ from roads_cba_py.utils import print_diff
 class CostBenefitAnalysisModel:
     def __init__(self, config):
         self.config = config
-        self.dGrowth = self.config.growth_rates
-        self.dTrafficLevels = self.config.traffic_levels
         self.dVehicleFleet = dVehicleFleet
         self.iSurfaceDefaults = iSurfaceDefaults
         self.dWidthDefaults = dWidthDefaults
         self.dConditionData = dConditionData
-        self.dRoadWorks = dRoadWorks
-        self.dRecurrent = dRecurrent
+        self.dRoadWorks = config.road_works
         self.dRecMult = dRecMult
         self.dWorkEvaluated = dWorkEvaluated
         self.dm_coeff = dm_coeff
@@ -157,7 +149,7 @@ class CostBenefitAnalysisModel:
 
             work_idx = int(dAlternatives[ia, 0]) - 1
             work_year = int(dAlternatives[ia, 1])
-            alt = alternatives[work_idx]
+            alt = self.config.road_works.alternatives[work_idx]
 
             iTheRepair = alt.repair
             repair_years = [work_year + i * alt.repair_period for i in [1, 2, 3, 4]]
@@ -202,7 +194,7 @@ class CostBenefitAnalysisModel:
 
                 # repair road work
                 if (iy + 1) in repair_years:
-                    repair_alt = alternatives[iTheRepair - 1]
+                    repair_alt = self.config.road_works.alternatives[iTheRepair - 1]
                     sRoadCode[ia, iy] = repair_alt.code
                     if repair_alt.lanes_class and repair_alt.lanes_class > 0:
                         iCondLanes[ia, iy] = iYearLanes = repair_alt.lanes_class
@@ -219,14 +211,21 @@ class CostBenefitAnalysisModel:
                     dCostRepairEco[ia, iy] = dCostRepairFin[ia, iy] * self.config.economic_factor
 
                 # recurrent road work without recurrent maintenance condition multipliers
-                dCostRecurrentFin[ia, iy] = (
-                    self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1] * dCondLength[ia, iy] / 1000000.0
-                )
+                # dCostRecurrentFin[ia, iy] = (
+                #     self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1] * dCondLength[ia, iy] / 1000000.0
+                # )
+                # dCostRecurrentEco[ia, iy] = (
+                #     self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1]
+                #     * dCondLength[ia, iy]
+                #     * self.config.economic_factor
+                #     / 1000000.0
+                # )
+                # recurrent road work without recurrent maintenance condition multipliers
+                surface_type, lanes_class = iCondSurface[ia, iy], iCondLanes[ia, iy]
+                recurrent_cost = self.config.recurrent_costs.get(surface_type, lanes_class)
+                dCostRecurrentFin[ia, iy] = recurrent_cost * dCondLength[ia, iy] / 1000000.0
                 dCostRecurrentEco[ia, iy] = (
-                    self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1]
-                    * dCondLength[ia, iy]
-                    * self.config.economic_factor
-                    / 1000000.0
+                    recurrent_cost * dCondLength[ia, iy] * self.config.economic_factor / 1000000.0
                 )
 
                 # Roughness
@@ -422,7 +421,7 @@ class CostBenefitAnalysisModel:
 
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
 
-        growth_factor = 1.0 + self.dGrowth.for_scenario(iGrowthScenario).as_numpy  # [idx : idx + 1, :]
+        growth_factor = 1.0 + self.config.growth_rates.for_scenario(iGrowthScenario).as_numpy
 
         # Use numpy cumumlative sum to calculate the growth into the next 20 years
         dAADT[0:12, 1:20] = growth_factor.T[:, None]
@@ -485,8 +484,8 @@ class CostBenefitAnalysisModel:
             raise ValueError(msg)
 
         if section.aadt_total == 0:
-            section.aadt_total = self.dTrafficLevels.by_level[section.traffic_level - 1].aadt
-            proportions = self.dTrafficLevels.by_level[section.traffic_level - 1].proportions
+            section.aadt_total = self.config.traffic_levels.by_level[section.traffic_level - 1].aadt
+            proportions = self.config.traffic_levels.by_level[section.traffic_level - 1].proportions
             section.set_aadts(proportions * section.aadt_total)
 
         calc_aadt_total = sum(section.get_aadts())
@@ -506,7 +505,7 @@ class CostBenefitAnalysisModel:
                         + f"surface_type = {section.surface_type}, condition_class = {section.condition_class}"
                     )
                     raise ValueError(msg)
-                section.structural_no = self.dTrafficLevels.by_level[section.traffic_level].struct_no
+                section.structural_no = self.config.traffic_levels.by_level[section.traffic_level].struct_no
 
         return section
 

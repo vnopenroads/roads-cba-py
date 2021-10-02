@@ -22,7 +22,7 @@ pd.set_option("display.max_rows", None)
 
 
 def find_pipfile(curr_dir):
-    if isfile(join(curr_dir, "Pipfile")):
+    if isfile(join(curr_dir, "requirements.txt")):
         return curr_dir
     parent_dir = str(Path(curr_dir).parent)
     return find_pipfile(parent_dir)
@@ -40,4 +40,4 @@ if notebook_dir not in sys.path:
 from os.path import expanduser
 
 home = expanduser("~")
-sys.environ["TEMP_DIR"] = join(home, "tmp")
+os.environ["TEMP_DIR"] = join(home, "tmp")
