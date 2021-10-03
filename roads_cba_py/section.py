@@ -83,7 +83,7 @@ class Section(BaseModel):
     aadt_total: float = 0.0
 
     def __str__(self):
-        return str(self.to_primitive())
+        return self.json()
 
     @staticmethod
     def maybe_int(maybe_int: Optional[int]):

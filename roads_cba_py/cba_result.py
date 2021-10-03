@@ -29,7 +29,7 @@ class CbaResult(BaseModel):
     net_benefits: List[float]
 
     def __repr__(self):
-        return str(self.to_primitive())
+        return self.json()
 
     def to_dict(self):
         rv = {
