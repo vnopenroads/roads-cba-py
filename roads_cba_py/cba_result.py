@@ -7,6 +7,7 @@ from typing import List
 
 class CbaResult(BaseModel):
     orma_way_id: str
+    length: float
     work_class: str
     work_type: str
     work_name: str
@@ -34,6 +35,7 @@ class CbaResult(BaseModel):
     def to_dict(self):
         rv = {
             "orma_way_id": self.orma_way_id,
+            "length": self.length,
             "work_class": self.work_class,
             "work_type": self.work_type,
             "work_name": self.work_name,

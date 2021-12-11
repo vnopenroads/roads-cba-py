@@ -224,9 +224,7 @@ class CostBenefitAnalysisModel:
                 surface_type, lanes_class = iCondSurface[ia, iy], iCondLanes[ia, iy]
                 recurrent_cost = self.config.recurrent_costs.get(surface_type, lanes_class)
                 dCostRecurrentFin[ia, iy] = recurrent_cost * dCondLength[ia, iy] / 1000000.0
-                dCostRecurrentEco[ia, iy] = (
-                    recurrent_cost * dCondLength[ia, iy] * self.config.economic_factor / 1000000.0
-                )
+                dCostRecurrentEco[ia, iy] = dCostRecurrentFin[ia, iy] * self.config.economic_factor
 
                 # Roughness
                 if iy > 0:
@@ -342,8 +340,13 @@ class CostBenefitAnalysisModel:
             "con_projection": dCondCON[iTheSelected].tolist(),
             "con_base": dCondCON[0].tolist(),
             "financial_recurrent_cost": dCostRecurrentFin[iTheSelected].tolist(),
+            "capital_cost": dCostCapitalEco[iTheSelected].tolist(),
+            "repair_cost": dCostRepairEco[iTheSelected].tolist(),
+            "maintenance_cost": dCostRecurrentEco[iTheSelected].tolist(),
+            "user_cost": dCostUsers[iTheSelected].tolist(),
             "net_benefits": dNetTotal[iTheSelected].tolist(),
             "orma_way_id": section.orma_way_id,
+            "length": dLength,
         }
         return CbaResult.parse_obj(results)
 
