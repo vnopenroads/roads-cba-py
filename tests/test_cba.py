@@ -27,10 +27,12 @@ class TestCbaModel(unittest.TestCase):
         files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
         files = sample(files, 100)
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
-        # idents = ["638901_301"]
+        idents = ["638901_301"]
 
         def process_ident(ident):
-            input = Section.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+            file = join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json")
+            # print(f"Processing {file}")
+            input = Section.parse_file(file)
             return self.cba_model.compute_cba_for_section(input)
 
         start = time.time()
@@ -39,7 +41,9 @@ class TestCbaModel(unittest.TestCase):
 
         errors = []
         for ident, actual_output in actual_outputs.items():
-            expected_output = CbaResult.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
+            file = join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json")
+            print(f"Processing {file}")
+            expected_output = CbaResult.parse_file(file)
             diffs = {
                 k: [actual_output.to_dict()[k], expected_output.to_dict()[k], v]
                 for k, v in actual_output.compare(expected_output).items()

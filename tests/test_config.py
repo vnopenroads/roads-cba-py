@@ -63,4 +63,4 @@ class TestConfig(unittest.TestCase):
 
     def test_traffic_levels(self):
         tpbl = TrafficProportionsByLevel()
-        print((tpbl.json(exclude={"by_level": {"__all__": {"proportions"}}})))
+        # print((tpbl.json(exclude={"by_level": {"__all__": {"proportions"}}})))

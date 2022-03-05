@@ -38,7 +38,6 @@ def print_diff(k, v1, v2):
             v2 = v2[0:10]
         if len(v2) == 10 and len(v1) == 20:
             v1 = v1[0:10]
-        print(f"{k}:")
         [print(f"   {comp_str(x, y)}") for x, y in zip(v1, v2)]
         return None
 

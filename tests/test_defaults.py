@@ -1,11 +1,9 @@
-import time
 import unittest
 
 import numpy as np
-from intervaltree import IntervalTree
 
-from roads_cba_py.defaults import traffic_ranges, traffic_ranges_data, default_range, dTrafficLevels
-from roads_cba_py.configs.road_works import alternatives
+from roads_cba_py.defaults import default_range
+from roads_cba_py.configs.road_works import RoadWorks
 
 
 class TestDefaults(unittest.TestCase):
@@ -20,5 +18,6 @@ class TestDefaults(unittest.TestCase):
         self.assertEqual("first bucket", lu(1.49))
         self.assertEqual("second bucket", lu(1.5))
 
-    def test_alternatives(self):
-        print([e.json() for e in alternatives])
+    # def test_alternatives(self):
+    #     pass
+    #     # print([e.json() for e in RoadWorks().alternatives])
