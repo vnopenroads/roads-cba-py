@@ -1,10 +1,9 @@
-import time
 import unittest
 
 import numpy as np
-from intervaltree import IntervalTree
 
-from roads_cba_py.defaults import traffic_ranges, traffic_ranges_data, default_range, dTrafficLevels, TrafficLevelRow
+from roads_cba_py.defaults import default_range
+from roads_cba_py.configs.road_works import RoadWorks
 
 
 class TestDefaults(unittest.TestCase):
@@ -19,7 +18,6 @@ class TestDefaults(unittest.TestCase):
         self.assertEqual("first bucket", lu(1.49))
         self.assertEqual("second bucket", lu(1.5))
 
-    # def test_extract_for_webapp(self):
-
-    #     for e, i in enumerate(dTrafficLevels):
-    #         print(TrafficLevelRow(e, i).as_dict())
+    # def test_alternatives(self):
+    #     pass
+    #     # print([e.json() for e in RoadWorks().alternatives])

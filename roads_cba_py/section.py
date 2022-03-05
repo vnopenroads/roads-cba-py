@@ -1,10 +1,8 @@
 import json
 from os import stat
 from typing import List, Optional
-from schematics.exceptions import ConversionError
 
-from schematics.models import Model
-from schematics.types import IntType, StringType, FloatType
+from pydantic import BaseModel
 
 
 class InvalidSection(object):
@@ -17,88 +15,75 @@ class InvalidSection(object):
 
     @staticmethod
     def clean_errors(errors):
-        return [InvalidSection.clean_error(k, v) for k, v in errors.items()]
+        return [InvalidSection.clean_error(e) for e in errors]
 
     @staticmethod
-    def clean_error(k, v):
-        # print(type(v), v)
-        # print(type(k), k)
-        # print(isinstance(v, ConversionError))
-        if isinstance(v, ConversionError):
-            return f"Invalid characters in '{k}', expected float"
-        return f"Generic error: {k}"
+    def clean_error(e):
+        (field,) = e["loc"]
+        if "value is not a valid" in e["msg"]:
+            return f"Invalid characters in '{field}', expected float"
+        if e["type"] == "type_error.none.not_allowed":
+            return f"Missing required field: '{field}'"
+        return f"Generic error: {e}"
 
 
-def parse_section(json):
+def parse_section(dict_obj):
     try:
-        return Section(json)
+        return Section.parse_obj(dict_obj)
     except Exception as err:
-        return InvalidSection(err.errors, json)
+        return InvalidSection(err.errors(), dict_obj)
 
 
-class Section(Model):
-    orma_way_id = StringType(max_length=20, min_length=1, required=True)
-    vpromm_id = StringType(max_length=20, min_length=1)
-    # section_id = StringType(max_length=30, required=True)
-    road_number = StringType(max_length=10)
-    road_name = StringType(max_length=255, min_length=1)
-    road_start = StringType(max_length=255, min_length=1)
-    road_end = StringType(max_length=255, min_length=1)
+class Section(BaseModel):
+    orma_way_id: str
+    vpromms_id: Optional[str] = ""
+    road_number = ""
+    road_name: str = ""
+    road_start: str = ""
+    road_end: str = ""
 
-    section_order = IntType()
+    section_order: Optional[int] = -1
 
-    province = StringType(max_length=255, min_length=1)
-    district = StringType(max_length=255, min_length=1)
-    # province = ForeignKey('administrations.AdminUnit', null=True,
-    #                              blank=True, on_delete=PROTECT,
-    #                              related_name='province_sections')
-    # district = ForeignKey('administrations.AdminUnit', null=True,
-    #                              blank=True, on_delete=PROTECT,
-    #                              related_name='district_sections')
+    province: str = ""
+    district: str = ""
+    commune: str = ""
+    management: int = -1
 
-    commune = StringType(max_length=25)
-    management = IntType()
+    start_km: float = 0.0
+    end_km: float = 0.0
+    length: float
+    vpromms_length: float = 0.0
+    lanes: int = 0
+    width: float = 0.0
+    road_class: int = 0
+    terrain: int = 0
+    temperature: int = 0
+    moisture: int = 0
+    road_type: Optional[int] = 0
+    surface_type: int = 0
+    condition_class: int = 0
+    roughness: float = 0.0
+    traffic_level: int = 0
+    traffic_growth: int = 0
+    structural_no: Optional[float] = 0.0
+    pavement_age: int = 0
 
-    start_km = FloatType()
-    end_km = FloatType()
-    length = FloatType(required=True)
-    vpromms_length = FloatType()
-    lanes = IntType(default=0)
-    width = FloatType(default=0)
-    road_class = IntType(default=0)
-    terrain = IntType(default=0)
-    temperature = IntType(default=0)
-    moisture = IntType(default=0)
-    road_type = IntType(default=0)
-    surface_type = IntType(default=0)
-    condition_class = IntType(default=0)
-    roughness = FloatType(default=0)
-    traffic_level = IntType(default=0)
-    traffic_growth = IntType(default=0)
-    structural_no = FloatType(default=0)
-    pavement_age = IntType(default=0)
-
-    aadt_motorcyle = FloatType(default=0.0)
-    aadt_carsmall = FloatType(default=0.0)
-    aadt_carmedium = FloatType(default=0.0)
-    aadt_delivery = FloatType(default=0.0)
-    aadt_4wheel = FloatType(default=0.0)
-    aadt_smalltruck = FloatType(default=0.0)
-    aadt_mediumtruck = FloatType(default=0.0)
-    aadt_largetruck = FloatType(default=0.0)
-    aadt_articulatedtruck = FloatType(default=0.0)
-    aadt_smallbus = FloatType(default=0.0)
-    aadt_mediumbus = FloatType(default=0.0)
-    aadt_largebus = FloatType(default=0.0)
-    aadt_total = FloatType(default=0.0)
+    aadt_motorcyle: float = 0.0
+    aadt_carsmall: float = 0.0
+    aadt_carmedium: float = 0.0
+    aadt_delivery: float = 0.0
+    aadt_4wheel: float = 0.0
+    aadt_smalltruck: float = 0.0
+    aadt_mediumtruck: float = 0.0
+    aadt_largetruck: float = 0.0
+    aadt_articulatedtruck: float = 0.0
+    aadt_smallbus: float = 0.0
+    aadt_mediumbus: float = 0.0
+    aadt_largebus: float = 0.0
+    aadt_total: float = 0.0
 
     def __str__(self):
-        return str(self.to_primitive())
-
-    @classmethod
-    def from_file(cls, filename):
-        with open(filename) as f:
-            return Section(json.load(f))
+        return self.json()
 
     @staticmethod
     def maybe_int(maybe_int: Optional[int]):

@@ -8,46 +8,53 @@ from os.path import join, dirname
 from pstats import SortKey
 from random import sample
 
-import schematics
 
 import roads_cba_py.cba as cba
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.section import Section
+from roads_cba_py.config import default_config
 
 
 class TestCbaModel(unittest.TestCase):
     EXAMPLE_DATA_DIR = join(dirname(__file__), "example_data")
 
     def setUp(self) -> None:
-        self.cba_model = cba.CostBenefitAnalysisModel()
-        warnings.filterwarnings("ignore", category=schematics.deprecated.SchematicsDeprecationWarning)
+        config = default_config()
+        self.cba_model = cba.CostBenefitAnalysisModel(config)
 
     def test_all_data_matches(self):
 
         files = [f for f in glob.glob(os.path.join(self.EXAMPLE_DATA_DIR, "section_*.json")) if "output" not in f]
-        files = files[0:10]
-        # files = sample(files, 10)
+        files = sample(files, 100)
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
+        idents = ["638901_301"]
 
         def process_ident(ident):
-            input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+            file = join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json")
+            # print(f"Processing {file}")
+            input = Section.parse_file(file)
             return self.cba_model.compute_cba_for_section(input)
 
         start = time.time()
         actual_outputs = {ident: process_ident(ident) for ident in idents}
         # print(f"Time: {time.time() - start}")
 
+        errors = []
         for ident, actual_output in actual_outputs.items():
-            expected_output = CbaResult.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json"))
+            file = join(self.EXAMPLE_DATA_DIR, f"section_{ident}.output.json")
+            print(f"Processing {file}")
+            expected_output = CbaResult.parse_file(file)
             diffs = {
                 k: [actual_output.to_dict()[k], expected_output.to_dict()[k], v]
                 for k, v in actual_output.compare(expected_output).items()
                 if ((isinstance(v, float) and v != 0.0) or (isinstance(v, str) and "==" not in v))
             }
             if diffs != {}:
+                print(f"Ident: {ident}")
                 for k, v in diffs.items():
                     print(k, v)
-            self.assertEqual({}, diffs)
+                errors.append(diffs)
+        self.assertEqual([], errors)
 
     def test_performance(self):
         import cProfile
@@ -59,7 +66,7 @@ class TestCbaModel(unittest.TestCase):
         idents = [re.match(".*section_(.*).json", f)[1] for f in files]
 
         def process_ident(ident):
-            input = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+            input = Section.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
             return self.cba_model.compute_cba_for_section(input)
 
         def foo():
@@ -74,7 +81,7 @@ class TestCbaModel(unittest.TestCase):
 
     def test_defaults(self):
         ident = "615073_305"
-        section = Section.from_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
+        section = Section.parse_file(join(self.EXAMPLE_DATA_DIR, f"section_{ident}.json"))
 
         self.assertEqual(0, section.roughness)
         section = self.cba_model.fill_defaults(section)

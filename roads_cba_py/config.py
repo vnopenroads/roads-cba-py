@@ -1,36 +1,25 @@
 import json
+import numpy as np
 
-from schematics import Model
-from schematics.types import FloatType, ModelType
+from pydantic import BaseModel
 
-
-class ScenarioGrowthRates(Model):
-    motorcycle = FloatType(required=True)
-    small_car = FloatType(required=True)
-    medium_car = FloatType(required=True)
-    delivery = FloatType(required=True)
-    four_wheel_drive = FloatType(required=True)
-    light_truck = FloatType(required=True)
-    medium_truck = FloatType(required=True)
-    heavy_truck = FloatType(required=True)
-    articulated_truck = FloatType(required=True)
-    small_bus = FloatType(required=True)
-    medium_bus = FloatType(required=True)
-    large_bus = FloatType(required=True)
+from roads_cba_py.configs.growth_rates import GrowthRates, GrowthRate
+from roads_cba_py.configs.traffic_levels import TrafficProportionsByLevel
+from roads_cba_py.configs.road_works import RoadWorks
+from roads_cba_py.configs.recurrent_costs import RecurrentCosts
 
 
-class GrowthRates(Model):
-    very_low = ModelType(ScenarioGrowthRates)
-    low = ModelType(ScenarioGrowthRates)
-    medium = ModelType(ScenarioGrowthRates)
-    high = ModelType(ScenarioGrowthRates)
-    very_high = ModelType(ScenarioGrowthRates)
+class Config(BaseModel):
+    discount_rate: float = 0.12
+    economic_factor: float = 0.91
+    growth_rates: GrowthRates = GrowthRates()
+    traffic_levels: TrafficProportionsByLevel = TrafficProportionsByLevel()
+    road_works: RoadWorks = RoadWorks()
+    recurrent_costs: RecurrentCosts = RecurrentCosts()
+
+    class Config:
+        json_encoders = {GrowthRate: lambda v: v.default, np.ndarray: lambda v: v.tolist()}
 
 
-class Config(Model):
-    growth_rates = ModelType(GrowthRates, required=True)
-    # fleet_characteristics = ModelType(FleetCharacters, required=True)
-
-
-def load_config(model, file):
-    return model(json.load(file))
+def default_config():
+    return Config()

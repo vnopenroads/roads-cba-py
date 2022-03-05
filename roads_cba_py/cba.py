@@ -1,19 +1,12 @@
 import numpy as np
 from numpy_financial import irr
 
-from roads_cba_py import defaults
 from roads_cba_py.cba_result import CbaResult
 from roads_cba_py.defaults import (
-    dDiscount_Rate,
-    dEconomic_Factor,
-    dGrowth,
-    dTrafficLevels,
     dVehicleFleet,
     iSurfaceDefaults,
     dWidthDefaults,
     dConditionData,
-    dRoadWorks,
-    dRecurrent,
     dRecMult,
     dWorkEvaluated,
     dm_coeff,
@@ -24,7 +17,6 @@ from roads_cba_py.defaults import (
     cc_from_iri_lu,
     default_lanes,
     traffic_ranges,
-    alternatives,
     traffic_range_lu,
     lanes_lu,
 )
@@ -33,17 +25,13 @@ from roads_cba_py.utils import print_diff
 
 
 class CostBenefitAnalysisModel:
-    def __init__(self):
-        self.dDiscount_Rate = dDiscount_Rate
-        self.dEconomic_Factor = dEconomic_Factor
-        self.dGrowth = dGrowth
-        self.dTrafficLevels = dTrafficLevels
+    def __init__(self, config):
+        self.config = config
         self.dVehicleFleet = dVehicleFleet
         self.iSurfaceDefaults = iSurfaceDefaults
         self.dWidthDefaults = dWidthDefaults
         self.dConditionData = dConditionData
-        self.dRoadWorks = dRoadWorks
-        self.dRecurrent = dRecurrent
+        self.dRoadWorks = config.road_works
         self.dRecMult = dRecMult
         self.dWorkEvaluated = dWorkEvaluated
         self.dm_coeff = dm_coeff
@@ -161,7 +149,7 @@ class CostBenefitAnalysisModel:
 
             work_idx = int(dAlternatives[ia, 0]) - 1
             work_year = int(dAlternatives[ia, 1])
-            alt = alternatives[work_idx]
+            alt = self.config.road_works.alternatives[work_idx]
 
             iTheRepair = alt.repair
             repair_years = [work_year + i * alt.repair_period for i in [1, 2, 3, 4]]
@@ -194,7 +182,7 @@ class CostBenefitAnalysisModel:
                     # Capital work costs
                     unit_cst = alt.get_unit_cost(iTerrain)
                     dCostCapitalFin[ia, iy] = unit_cst * dCondLength[ia, iy] * dCondWidth[ia, iy] / 1000.0 * dCostFactor
-                    dCostCapitalEco[ia, iy] = dCostCapitalFin[ia, iy] * self.dEconomic_Factor
+                    dCostCapitalEco[ia, iy] = dCostCapitalFin[ia, iy] * self.config.economic_factor
 
                     sRoadCode[ia, iy] = sSolCode[ia] = alt.code
                     sSolName[ia] = alt.name
@@ -206,7 +194,7 @@ class CostBenefitAnalysisModel:
 
                 # repair road work
                 if (iy + 1) in repair_years:
-                    repair_alt = alternatives[iTheRepair - 1]
+                    repair_alt = self.config.road_works.alternatives[iTheRepair - 1]
                     sRoadCode[ia, iy] = repair_alt.code
                     if repair_alt.lanes_class and repair_alt.lanes_class > 0:
                         iCondLanes[ia, iy] = iYearLanes = repair_alt.lanes_class
@@ -220,18 +208,23 @@ class CostBenefitAnalysisModel:
                     dCostRepairFin[ia, iy] = (
                         repair_alt.get_unit_cost(iTerrain) * dCondLength[ia, iy] * dCondWidth[ia, iy] / 1000.0
                     )
-                    dCostRepairEco[ia, iy] = dCostRepairFin[ia, iy] * self.dEconomic_Factor
+                    dCostRepairEco[ia, iy] = dCostRepairFin[ia, iy] * self.config.economic_factor
 
                 # recurrent road work without recurrent maintenance condition multipliers
-                dCostRecurrentFin[ia, iy] = (
-                    self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1] * dCondLength[ia, iy] / 1000000.0
-                )
-                dCostRecurrentEco[ia, iy] = (
-                    self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1]
-                    * dCondLength[ia, iy]
-                    * self.dEconomic_Factor
-                    / 1000000.0
-                )
+                # dCostRecurrentFin[ia, iy] = (
+                #     self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1] * dCondLength[ia, iy] / 1000000.0
+                # )
+                # dCostRecurrentEco[ia, iy] = (
+                #     self.dRecurrent[iCondSurface[ia, iy] - 1, iCondLanes[ia, iy] - 1]
+                #     * dCondLength[ia, iy]
+                #     * self.config.economic_factor
+                #     / 1000000.0
+                # )
+                # recurrent road work without recurrent maintenance condition multipliers
+                surface_type, lanes_class = iCondSurface[ia, iy], iCondLanes[ia, iy]
+                recurrent_cost = self.config.recurrent_costs.get(surface_type, lanes_class)
+                dCostRecurrentFin[ia, iy] = recurrent_cost * dCondLength[ia, iy] / 1000000.0
+                dCostRecurrentEco[ia, iy] = dCostRecurrentFin[ia, iy] * self.config.economic_factor
 
                 # Roughness
                 if iy > 0:
@@ -311,7 +304,7 @@ class CostBenefitAnalysisModel:
 
                 # NPV
                 # Serious Note: raise to the power iy not (iy - 1) in the following equation
-                dSolNPV[ia] = dSolNPV[ia] + dNetTotal[ia, iy] / ((1 + self.dDiscount_Rate) ** (iy))
+                dSolNPV[ia] = dSolNPV[ia] + dNetTotal[ia, iy] / ((1 + self.config.discount_rate) ** (iy))
                 dSolNPVKm[ia] = dSolNPV[ia] / dCondLength[ia, 0]
 
                 if dSolCost[ia] > 0:
@@ -347,10 +340,15 @@ class CostBenefitAnalysisModel:
             "con_projection": dCondCON[iTheSelected].tolist(),
             "con_base": dCondCON[0].tolist(),
             "financial_recurrent_cost": dCostRecurrentFin[iTheSelected].tolist(),
+            "capital_cost": dCostCapitalEco[iTheSelected].tolist(),
+            "repair_cost": dCostRepairEco[iTheSelected].tolist(),
+            "maintenance_cost": dCostRecurrentEco[iTheSelected].tolist(),
+            "user_cost": dCostUsers[iTheSelected].tolist(),
             "net_benefits": dNetTotal[iTheSelected].tolist(),
             "orma_way_id": section.orma_way_id,
+            "length": dLength,
         }
-        return CbaResult(results)
+        return CbaResult.parse_obj(results)
 
     # This converts the surface type, road class condition class into an index offset into the dWorkEvaluated array
     # There are 5 unique condition classes, 10 road classes which defines the math below
@@ -426,11 +424,10 @@ class CostBenefitAnalysisModel:
 
     def compute_annual_traffic(self, dAADT, iGrowthScenario):
 
-        idx = iGrowthScenario - 1
-        growth_factor = 1.0 + self.dGrowth[idx : idx + 1, :]
+        growth_factor = 1.0 + self.config.growth_rates.for_scenario(iGrowthScenario).as_numpy
 
         # Use numpy cumumlative sum to calculate the growth into the next 20 years
-        dAADT[0:12, 1:20] = growth_factor.T
+        dAADT[0:12, 1:20] = growth_factor.T[:, None]
         np.cumprod(dAADT[0:12, :], axis=1, out=dAADT[0:12, :])
 
         # Calculate the total AADT over all the vehicle classes
@@ -490,8 +487,8 @@ class CostBenefitAnalysisModel:
             raise ValueError(msg)
 
         if section.aadt_total == 0:
-            section.aadt_total = dTrafficLevels[section.traffic_level - 1, 0]
-            proportions = dTrafficLevels[section.traffic_level - 1, 1:13]
+            section.aadt_total = self.config.traffic_levels.by_level[section.traffic_level - 1].aadt
+            proportions = self.config.traffic_levels.by_level[section.traffic_level - 1].proportions
             section.set_aadts(proportions * section.aadt_total)
 
         calc_aadt_total = sum(section.get_aadts())
@@ -501,16 +498,17 @@ class CostBenefitAnalysisModel:
         if section.traffic_level == 0:
             section.traffic_level = traffic_range_lu(section.aadt_total)
         if section.traffic_growth == 0:
-            section.traffic_growth = 1
+            section.traffic_growth = 1  # if its not defined, assume the lowest growth
 
         if section.structural_no == 0:
             if section.surface_type < 4:
-                msg = (
-                    f"{section.orma_way_id} {section.surface_type}, {section.traffic_level}, {section.condition_class}"
-                )
-                if section.traffic_level and section.traffic_level > 14:
+                if section.traffic_level > 14:
+                    msg = (
+                        f"Section {section.orma_way_id} has traffic level ({section.traffic_level}) > 14, "
+                        + f"surface_type = {section.surface_type}, condition_class = {section.condition_class}"
+                    )
                     raise ValueError(msg)
-                section.structural_no = dTrafficLevels[section.traffic_level, 12 + section.condition_class]
+                section.structural_no = self.config.traffic_levels.by_level[section.traffic_level].struct_no
 
         return section
 

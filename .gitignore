@@ -2,9 +2,12 @@
 .ipynb_checkpoints
 __pycache__
 
+data/*
 data/tmp/*
 
 database_credentials.py
+.venv
 *.pem
+*egg-info*
 temp.json
 Pipfile.lock
