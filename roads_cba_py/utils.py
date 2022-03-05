@@ -4,11 +4,7 @@ import math
 def comp(a, b):
     a = a.__dict__["_data"]
     b = b.__dict__["_data"]
-    diffs = [
-        print_diff(k, v1, b[k])
-        for k, v1 in a.items()
-        if not check(v1, b[k]) and k != "eirr"
-    ]
+    diffs = [print_diff(k, v1, b[k]) for k, v1 in a.items() if not check(v1, b[k]) and k != "eirr"]
     return len(diffs) == 0
 
 
